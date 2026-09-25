@@ -17,6 +17,21 @@ function extractResponse(data: any): {text: string; sources: Citation[]} {
   const sources = new Map<string, Citation>();
 
   for (const item of output) {
+    if (item?.type === "web_search_call") {
+      for (const source of Array.isArray(item?.action?.sources) ? item.action.sources : []) {
+        const url = source?.url;
+        if (typeof url === "string" && url.startsWith("http")) {
+          sources.set(url, {
+            url,
+            title:
+              typeof source?.title === "string"
+                ? source.title
+                : new URL(url).hostname,
+          });
+        }
+      }
+    }
+
     for (const part of Array.isArray(item?.content) ? item.content : []) {
       if (part?.type === "output_text" && typeof part?.text === "string") {
         textParts.push(part.text);
@@ -192,6 +207,12 @@ export async function POST(req: NextRequest) {
         model: process.env.OPENAI_MODEL ?? "gpt-5.6",
         input: [{role: "user", content: inputContent}],
         tools: sandbox ? [] : [{type: "web_search"}],
+        ...(sandbox
+          ? {}
+          : {
+              tool_choice: "required",
+              include: ["web_search_call.action.sources"],
+            }),
         reasoning: {effort: "low"},
         max_output_tokens: 700,
         text: {
