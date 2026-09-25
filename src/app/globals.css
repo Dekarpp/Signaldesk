@@ -834,3 +834,127 @@ h3 { letter-spacing: -.02em; }
   padding: 10px 12px;
   border-top: 1px solid var(--line);
 }
+
+
+/* Submission-ready portfolio + unsigned build */
+.buildResult,
+.portfolioBlock {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.buildResult {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.buildResultTop,
+.portfolioHead,
+.portfolioSummary,
+.positionRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.buildResultTop strong,
+.portfolioSummary strong,
+.positionRow strong {
+  color: var(--text);
+}
+
+.buildResultTop span {
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.portfolioHead h3 {
+  margin: 4px 0 0;
+}
+
+.portfolioSummary {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(255,255,255,.015);
+  padding: 10px 11px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.portfolioSummary span {
+  color: var(--muted);
+}
+
+.positionList {
+  display: grid;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.positionRow {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.012);
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.positionRow > div:first-child {
+  min-width: 0;
+}
+
+.positionRow strong,
+.positionRow span {
+  display: block;
+}
+
+.positionRow strong {
+  font-size: 11px;
+}
+
+.positionRow span {
+  color: var(--muted);
+  font-size: 9px;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.positionValue {
+  color: var(--accent);
+  font-size: 11px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.portfolioEmpty {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.footer a {
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 520px) {
+  .buildResultTop,
+  .portfolioHead,
+  .portfolioSummary,
+  .positionRow {
+    align-items: flex-start;
+  }
+
+  .portfolioHead,
+  .portfolioSummary {
+    flex-direction: column;
+  }
+}
