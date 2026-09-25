@@ -14,21 +14,26 @@ function anonymousId() {
   return id;
 }
 
-export function trackTraction(
+export async function trackTraction(
   event: string,
   properties: Record<string, string | number | undefined> = {},
 ) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return false;
 
   const id = anonymousId();
-  if (!id) return;
+  if (!id) return false;
 
-  void fetch("/api/traction", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({event, anonymousId: id, properties}),
-    keepalive: true,
-  }).catch(() => undefined);
+  try {
+    const response = await fetch("/api/traction", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({event, anonymousId: id, properties}),
+      keepalive: true,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 export function trackSession() {
@@ -37,5 +42,5 @@ export function trackSession() {
   const now = Date.now();
   if (Number.isFinite(previous) && now - previous < SESSION_WINDOW_MS) return;
   window.localStorage.setItem(SESSION_KEY, String(now));
-  trackTraction("session");
+  void trackTraction("session");
 }
