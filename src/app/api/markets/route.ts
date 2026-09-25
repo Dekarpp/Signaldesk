@@ -37,6 +37,25 @@ function normalizeMarket(market: PantaMarket): PantaMarket {
   };
 }
 
+function mergeMarket(base: PantaMarket, detail: PantaMarket): PantaMarket {
+  return normalizeMarket({
+    ...base,
+    ...detail,
+    title: detail.title?.trim() || base.title,
+    description: detail.description?.trim() || base.description,
+    question: detail.question?.trim() || base.question,
+    images: detail.images?.length ? detail.images : base.images,
+    volumeUsdc: detail.volumeUsdc ?? base.volumeUsdc,
+    totalVolumeUsdc: detail.totalVolumeUsdc ?? base.totalVolumeUsdc,
+    yesPrice: detail.yesPrice ?? base.yesPrice,
+    noPrice: detail.noPrice ?? base.noPrice,
+    primaryYesPrice: detail.primaryYesPrice ?? base.primaryYesPrice,
+    primaryNoPrice: detail.primaryNoPrice ?? base.primaryNoPrice,
+    secondaryYesPrice: detail.secondaryYesPrice ?? base.secondaryYesPrice,
+    secondaryNoPrice: detail.secondaryNoPrice ?? base.secondaryNoPrice,
+  });
+}
+
 function isCurrentOrUpcoming(market: PantaMarket, nowSec: number) {
   const end =
     toEpochSeconds(market.endTime) ??
@@ -69,7 +88,7 @@ export async function GET() {
     const detailed = await Promise.all(
       active.map(async (market) => {
         try {
-          return normalizeMarket(await getMarket(market.marketId));
+          return mergeMarket(market, await getMarket(market.marketId));
         } catch {
           return market;
         }
