@@ -47,8 +47,19 @@ function extractResponse(data: any): {text: string; sources: Citation[]} {
   };
 }
 
+function cleanBriefText(value: unknown, max: number) {
+  return String(value ?? "")
+    .replace(/\s*\(\[[^\]]+\]\(https?:\/\/[^)]+\)\)/gi, "")
+    .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/gi, "$1")
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim()
+    .slice(0, max);
+}
+
 function fallbackBrief(text: string): SimpleBrief {
-  const clean = text.replace(/[#*_]/g, "").replace(/\s+/g, " ").trim();
+  const clean = cleanBriefText(text.replace(/[#*_]/g, ""), 240);
   return {
     title: "Quick read",
     bottomLine: clean.slice(0, 240) || "No clear conclusion yet.",
@@ -63,14 +74,20 @@ function parseBrief(text: string): SimpleBrief {
   try {
     const parsed = JSON.parse(text);
     return {
-      title: String(parsed?.title ?? "Quick read").slice(0, 90),
-      bottomLine: String(parsed?.bottomLine ?? "").slice(0, 320),
+      title: cleanBriefText(parsed?.title ?? "Quick read", 90),
+      bottomLine: cleanBriefText(parsed?.bottomLine, 320),
       keyPoints: Array.isArray(parsed?.keyPoints)
-        ? parsed.keyPoints.map(String).filter(Boolean).slice(0, 4)
+        ? parsed.keyPoints
+            .map((point: unknown) => cleanBriefText(point, 220))
+            .filter(Boolean)
+            .slice(0, 4)
         : [],
-      uncertainty: String(parsed?.uncertainty ?? "").slice(0, 260),
+      uncertainty: cleanBriefText(parsed?.uncertainty, 260),
       watch: Array.isArray(parsed?.watch)
-        ? parsed.watch.map(String).filter(Boolean).slice(0, 3)
+        ? parsed.watch
+            .map((item: unknown) => cleanBriefText(item, 180))
+            .filter(Boolean)
+            .slice(0, 3)
         : [],
       confidence:
         parsed?.confidence === "High" || parsed?.confidence === "Medium"
