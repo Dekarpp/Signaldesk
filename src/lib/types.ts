@@ -7,6 +7,7 @@ export type PantaMarket = {
   marketType?: string;
   images?: string[];
   region?: string;
+  oracle?: string;
   startTime?: number | string;
   endTime?: number | string;
   resolutionTime?: number | string;
