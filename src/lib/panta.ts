@@ -21,10 +21,34 @@ async function pantaFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
-export function listMarkets(limit = 24) {
-  return pantaFetch<{items: PantaMarket[]; nextCursor?: string | null}>(
-    `/markets/?limit=${Math.min(limit, 50)}`,
-  );
+export async function listMarkets(limit = 100) {
+  const target = Math.max(1, Math.min(limit, 200));
+  const items: PantaMarket[] = [];
+  let nextCursor: string | null = null;
+  let pages = 0;
+
+  do {
+    const pageSize = Math.min(50, target - items.length);
+    const query = new URLSearchParams({limit: String(pageSize)});
+    if (nextCursor) query.set("cursor", nextCursor);
+
+    const page = await pantaFetch<{
+      items: PantaMarket[];
+      nextCursor?: string | null;
+    }>(`/markets/?${query.toString()}`);
+
+    items.push(...(page.items ?? []));
+    nextCursor = page.nextCursor ?? null;
+    pages += 1;
+  } while (nextCursor && items.length < target && pages < 4);
+
+  const deduped = [...new Map(items.map((market) => [market.marketId, market])).values()];
+
+  return {
+    items: deduped,
+    nextCursor,
+    pagesFetched: pages,
+  };
 }
 
 export function getMarket(marketId: string) {
