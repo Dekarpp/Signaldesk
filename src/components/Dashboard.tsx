@@ -16,6 +16,15 @@ type MarketsResponse = {
 
 type Citation = {title: string; url: string};
 
+type SimpleBrief = {
+  title: string;
+  bottomLine: string;
+  keyPoints: string[];
+  uncertainty: string;
+  watch: string[];
+  confidence: "Low" | "Medium" | "High";
+};
+
 type MarketActivity = {
   tradeCount: number;
   yesFlow: number;
@@ -104,6 +113,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<SignalMarket | null>(null);
   const [analysis, setAnalysis] = useState("");
+  const [brief, setBrief] = useState<SimpleBrief | null>(null);
   const [sources, setSources] = useState<Citation[]>([]);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [activity, setActivity] = useState<MarketActivity | null>(null);
@@ -255,6 +265,7 @@ export default function Dashboard() {
       phase: market.phase,
     });
     setAnalysis("");
+    setBrief(null);
     setSources([]);
     setActivity(null);
     setQuote(null);
@@ -293,6 +304,7 @@ export default function Dashboard() {
     if (!selected) return;
     setAnalysisLoading(true);
     setAnalysis("");
+    setBrief(null);
     setSources([]);
     setError("");
 
@@ -315,6 +327,7 @@ export default function Dashboard() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Research failed");
       setAnalysis(json.analysis);
+      setBrief(json.brief ?? null);
       setSources(Array.isArray(json.sources) ? json.sources : []);
       void trackTraction(
         mode === "move" ? "move_research_generated" : "research_generated",
