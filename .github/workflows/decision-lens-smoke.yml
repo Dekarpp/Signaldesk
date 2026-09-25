@@ -12,7 +12,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASE="https://signaldesk-p83qczwu6-dekarp8-1008.vercel.app"
+          BASE="https://signaldesk-henna.vercel.app"
+          EXPECTED="${GITHUB_SHA:0:12}"
+          for i in $(seq 1 18); do
+            LIVE="$(curl -fsS "$BASE/api/health" | jq -r '.commitSha // ""' || true)"
+            echo "production=$LIVE expected=$EXPECTED"
+            if [ "$LIVE" = "$EXPECTED" ]; then
+              break
+            fi
+            sleep 5
+          done
+          test "$LIVE" = "$EXPECTED"
           PAYLOAD='{"market":{"marketId":"GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V","category":"gaming","title":"Will GTA 6 release on November 19th, 2026","description":"Will GTA 6 release on November 19th, 2026","phase":"secondary","yes":0.5,"no":0.5,"volume":5,"daysToClose":56},"mode":"research"}'
           RESULT="$(curl -fsS -X POST "$BASE/api/analyze"             -H 'content-type: application/json'             -H 'x-signaldesk-client: decision-smoke-gta-v3'             --data "$PAYLOAD")"
           echo "$RESULT" | jq '{decision:.brief.decision, sourceCount:(.sources|length)}'
@@ -24,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASE="https://signaldesk-p83qczwu6-dekarp8-1008.vercel.app"
+          BASE="https://signaldesk-henna.vercel.app"
           PAYLOAD='{"market":{"marketId":"TestMarketPoliticalGuard","category":"politics","title":"Will Candidate A win the example election?","description":"Sandbox political neutrality test","phase":"secondary","yes":0.5,"no":0.5,"disclaimer":"sandbox"},"mode":"research"}'
           RESULT="$(curl -fsS -X POST "$BASE/api/analyze"             -H 'content-type: application/json'             -H 'x-signaldesk-client: decision-smoke-politics-v3'             --data "$PAYLOAD")"
           echo "$RESULT" | jq '{decision:.brief.decision}'
