@@ -133,7 +133,7 @@ https://signaldesk-henna.vercel.app
 
 https://github.com/Dekarpp/Signaldesk
 
-**Before final submission:** change repository visibility to public so judges can review the code.
+Repository is public and ready for judge review.
 
 ## Two-minute demo script
 
@@ -247,7 +247,7 @@ Live demo: https://signaldesk-henna.vercel.app
 - [x] GitHub CI/build
 - [x] README / architecture / business plan
 - [x] Submission copy
-- [ ] Make GitHub repository public
+- [x] Make GitHub repository public
 - [ ] Record and upload ~2-minute demo video
 - [ ] Register/join Crypto World's Fair with the human's Colosseum account
 - [ ] Submit on Colosseum before the official deadline
