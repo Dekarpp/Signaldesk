@@ -298,6 +298,36 @@ h3 { letter-spacing: -.02em; }
 
 .filterInput { min-width: 0; }
 
+.scannerTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.watchlistToggle {
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.btn.watching,
+.watchlistToggle.watching {
+  color: var(--accent);
+  border-color: #3f5d2f;
+  background: #101810;
+}
+
+.watchFlag {
+  padding: 5px 8px;
+  border: 1px solid #3f5d2f;
+  border-radius: 999px;
+  color: var(--accent);
+  background: #101810;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .marketGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -631,6 +661,7 @@ h3 { letter-spacing: -.02em; }
 @media (max-width: 980px) {
   .marketGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .scannerHeader { align-items: stretch; flex-direction: column; }
+  .scannerTitle { justify-content: space-between; }
   .filterGrid { width: 100%; }
 }
 
