@@ -4,9 +4,12 @@ export type PantaMarket = {
   title: string;
   description: string;
   phase: "primary" | "secondary" | "resolved" | "cancelled" | string;
-  startTime?: number;
-  endTime?: number;
-  resolutionTime?: number;
+  marketType?: string;
+  images?: string[];
+  region?: string;
+  startTime?: number | string;
+  endTime?: number | string;
+  resolutionTime?: number | string;
   status?: string;
   volumeUsdc?: string;
   yesPrice?: string | null;
@@ -15,6 +18,8 @@ export type PantaMarket = {
   primaryNoPrice?: string | null;
   secondaryYesPrice?: string | null;
   secondaryNoPrice?: string | null;
+  disclaimer?: string;
+  onChain?: unknown;
 };
 
 export type SignalMarket = PantaMarket & {
@@ -25,4 +30,6 @@ export type SignalMarket = PantaMarket & {
   volume: number;
   yes: number | null;
   no: number | null;
+  daysToClose: number | null;
+  attentionReason: string;
 };
