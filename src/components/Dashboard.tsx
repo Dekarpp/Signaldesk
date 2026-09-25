@@ -16,6 +16,15 @@ type MarketsResponse = {
 
 type Citation = {title: string; url: string};
 
+type DecisionLens = {
+  signal: "leans_yes" | "balanced" | "leans_no" | "unclear" | "not_assessed";
+  strength: "Low" | "Medium" | "High";
+  summary: string;
+  supporting: string[];
+  counter: string[];
+  changesView: string[];
+};
+
 type SimpleBrief = {
   title: string;
   bottomLine: string;
@@ -23,6 +32,7 @@ type SimpleBrief = {
   uncertainty: string;
   watch: string[];
   confidence: "Low" | "Medium" | "High";
+  decision: DecisionLens;
 };
 
 type MarketActivity = {
@@ -703,7 +713,7 @@ export default function Dashboard() {
                   onClick={() => runResearch("research")}
                   disabled={analysisLoading}
                 >
-                  {analysisLoading ? "Checking sources…" : "Get the 30-sec answer"}
+                  {analysisLoading ? "Checking sources…" : "Analyze the evidence"}
                 </button>
                 <button
                   className="btn"
@@ -1194,7 +1204,9 @@ function PriceSparkline({points}: {points: PricePoint[]}) {
 function SimpleResearchBrief({brief}: {brief: SimpleBrief}) {
   return (
     <div className="simpleBrief">
-      <div className="briefHero">
+      <DecisionLensCard decision={brief.decision} />
+
+      <div className="briefHero compactBriefHero">
         <div>
           <div className="briefKicker">Bottom line</div>
           <h3>{brief.title}</h3>
@@ -1207,7 +1219,7 @@ function SimpleResearchBrief({brief}: {brief: SimpleBrief}) {
       <p className="bottomLine">{brief.bottomLine}</p>
 
       <details className="deepDive">
-        <summary>See evidence & details</summary>
+        <summary>See why</summary>
         <div className="deepDiveBody">
           {!!brief.keyPoints.length && (
             <div className="briefSection">
@@ -1222,6 +1234,8 @@ function SimpleResearchBrief({brief}: {brief: SimpleBrief}) {
               </div>
             </div>
           )}
+
+          <DecisionEvidence decision={brief.decision} />
 
           <div className="uncertaintyBox">
             <span>?</span>
@@ -1243,6 +1257,101 @@ function SimpleResearchBrief({brief}: {brief: SimpleBrief}) {
           )}
         </div>
       </details>
+    </div>
+  );
+}
+
+function DecisionLensCard({decision}: {decision: DecisionLens}) {
+  const label =
+    decision.signal === "leans_yes"
+      ? "Evidence leans YES"
+      : decision.signal === "leans_no"
+        ? "Evidence leans NO"
+        : decision.signal === "balanced"
+          ? "Evidence is balanced"
+          : decision.signal === "not_assessed"
+            ? "Neutral factual view"
+            : "Evidence is unclear";
+
+  const position =
+    decision.signal === "leans_no"
+      ? 12
+      : decision.signal === "leans_yes"
+        ? 88
+        : decision.signal === "balanced"
+          ? 50
+          : 50;
+
+  return (
+    <div className={"decisionLens decision-" + decision.signal}>
+      <div className="decisionLensTop">
+        <div>
+          <div className="briefKicker">Decision lens</div>
+          <h3>{label}</h3>
+        </div>
+        <span className={"decisionStrength strength" + decision.strength}>
+          {decision.strength} evidence
+        </span>
+      </div>
+
+      {decision.signal !== "not_assessed" && (
+        <div className="evidenceScale" aria-label={label}>
+          <div className="evidenceScaleTrack">
+            <span className="evidenceMarker" style={{left: position + "%"}} />
+          </div>
+          <div className="evidenceScaleLabels">
+            <span>NO</span>
+            <span>Balanced</span>
+            <span>YES</span>
+          </div>
+        </div>
+      )}
+
+      <p>{decision.summary}</p>
+      <div className="decisionNote">
+        This is an evidence summary, not a trade recommendation or a forecast guarantee.
+      </div>
+    </div>
+  );
+}
+
+function DecisionEvidence({decision}: {decision: DecisionLens}) {
+  if (
+    !decision.supporting.length &&
+    !decision.counter.length &&
+    !decision.changesView.length
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="decisionEvidence">
+      {!!decision.supporting.length && (
+        <div>
+          <h4>{decision.signal === "not_assessed" ? "Key evidence" : "Supports this view"}</h4>
+          {decision.supporting.map((item, index) => (
+            <p key={"support-" + index}>+ {item}</p>
+          ))}
+        </div>
+      )}
+
+      {!!decision.counter.length && (
+        <div>
+          <h4>What pushes back</h4>
+          {decision.counter.map((item, index) => (
+            <p key={"counter-" + index}>− {item}</p>
+          ))}
+        </div>
+      )}
+
+      {!!decision.changesView.length && (
+        <div>
+          <h4>What could change the view</h4>
+          {decision.changesView.map((item, index) => (
+            <p key={"change-" + index}>→ {item}</p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
