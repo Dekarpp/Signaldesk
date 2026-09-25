@@ -3,6 +3,7 @@ export type PantaMarket = {
   category: string | null;
   title: string;
   description: string;
+  question?: string;
   phase: "primary" | "secondary" | "resolved" | "cancelled" | string;
   marketType?: string;
   images?: string[];
@@ -12,7 +13,8 @@ export type PantaMarket = {
   endTime?: number | string;
   resolutionTime?: number | string;
   status?: string;
-  volumeUsdc?: string;
+  volumeUsdc?: string | null;
+  totalVolumeUsdc?: string | null;
   yesPrice?: string | null;
   noPrice?: string | null;
   primaryYesPrice?: string | null;
