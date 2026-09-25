@@ -4,7 +4,7 @@ const ID_KEY = "signaldesk:anonymous-id";
 const SESSION_KEY = "signaldesk:last-session-event";
 const SESSION_WINDOW_MS = 6 * 60 * 60 * 1000;
 
-function anonymousId() {
+export function tractionClientId() {
   if (typeof window === "undefined") return "";
   let id = window.localStorage.getItem(ID_KEY);
   if (!id) {
@@ -20,7 +20,7 @@ export async function trackTraction(
 ) {
   if (typeof window === "undefined") return false;
 
-  const id = anonymousId();
+  const id = tractionClientId();
   if (!id) return false;
 
   try {
