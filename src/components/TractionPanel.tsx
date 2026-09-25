@@ -22,13 +22,16 @@ export default function TractionPanel() {
     setStatus("");
 
     try {
-      trackTraction("feedback_submitted", {
+      const ok = await trackTraction("feedback_submitted", {
         rating: Number(rating),
         role,
         message: text,
       });
+      if (!ok) throw new Error("Unable to record feedback");
       setMessage("");
       setStatus("Thanks — feedback recorded.");
+    } catch {
+      setStatus("Could not record feedback. Please try again.");
     } finally {
       setSending(false);
     }
