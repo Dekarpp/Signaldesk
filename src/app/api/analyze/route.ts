@@ -145,6 +145,7 @@ export async function POST(req: NextRequest) {
       "Return 2 to 4 keyPoints. Each must be one short sentence.",
       "Return no more than 3 watch items. Each must be one short sentence.",
       "Do not include URLs in any text field. Sources are displayed separately by the product.",
+      "The confidence field means confidence in the quality of the evidence, not confidence that YES or NO will win.",
       "",
       "MARKET:",
       JSON.stringify(market, null, 2),
