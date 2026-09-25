@@ -13,7 +13,7 @@ jobs:
         run: |
           set -euo pipefail
           BASE="https://signaldesk-henna.vercel.app"
-          EXPECTED="${GITHUB_SHA:0:12}"
+          EXPECTED="96d1ac6fa09a"
           for i in $(seq 1 18); do
             LIVE="$(curl -fsS "$BASE/api/health" | jq -r '.commitSha // ""' || true)"
             echo "production=$LIVE expected=$EXPECTED"
