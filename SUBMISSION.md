@@ -10,11 +10,11 @@ This file is the copy-ready package for the Colosseum Crypto World's Fair submis
 
 ## One-line description
 
-SignalDesk turns live Panta markets into an AI-assisted research queue, combining market activity, probability moves, wallet positions, fresh web evidence, and guarded execution preparation.
+SignalDesk turns live Panta markets into a decision-support dashboard that separates what the market thinks from what current public evidence supports, then adds market activity, wallet positions, fresh web research, and guarded execution preparation.
 
 ## Short description
 
-SignalDesk is a prediction-market intelligence terminal built on the Panta API. It scans live markets, ranks what deserves attention, summarizes recent Panta trading activity, researches fresh real-world evidence, explains plausible drivers behind market moves, and tracks watchlists and public-wallet positions. It also implements Panta primary quote and unsigned-build adapters; the UI only enables that path when the live Panta catalog exposes executable primary pricing, and it always stops before signing or broadcasting.
+SignalDesk is a prediction-market intelligence terminal built on the Panta API. It scans live markets, ranks what deserves attention, summarizes recent Panta trading activity, researches fresh real-world evidence, and adds a Market-vs-Evidence decision lens so users can compare the market-implied probability with the direction and strength of current evidence without receiving a trade recommendation. It also explains plausible drivers behind market moves and tracks watchlists and public-wallet positions. It also implements Panta primary quote and unsigned-build adapters; the UI only enables that path when the live Panta catalog exposes executable primary pricing, and it always stops before signing or broadcasting.
 
 ## Problem
 
@@ -34,6 +34,8 @@ SignalDesk creates a research-first workflow:
 - deterministic research-priority scoring
 - recent trade/activity context
 - fresh AI research with public sources
+- Market-vs-Evidence decision lens
+- supporting evidence, counterevidence, and conditions that would change the view
 - "Why did this market move?" analysis
 - local watchlists
 - Panta wallet positions
@@ -83,7 +85,7 @@ SignalDesk is not another prediction-market destination. It is an intelligence l
 
 The wedge is the workflow from:
 
-**market signal → context → evidence → movement explanation → wallet exposure → execution preparation**
+**market signal → market-vs-evidence comparison → context → counterevidence → movement explanation → wallet exposure → execution preparation**
 
 That workflow can later serve traders, media teams, creators, communities, and other applications that want Panta market intelligence without rebuilding Panta itself.
 
@@ -167,7 +169,7 @@ Show:
 
 Say:
 
-"The AI layer uses the actual Panta market plus fresh web evidence. It separates facts from uncertainty and does not tell the user what trade to make."
+"Panta shows what the market thinks. SignalDesk adds a separate evidence lens showing whether current public evidence leans YES, balanced, NO, or remains unclear. It also shows the strongest counterevidence and what would change that view — without telling the user what trade to make."
 
 ### 1:05–1:30 — Wallet intelligence
 
@@ -235,6 +237,8 @@ Live demo: https://signaldesk-henna.vercel.app
 - [x] Panta market detail/prices
 - [x] Panta recent trade activity
 - [x] AI research with fresh sources
+- [x] Market-vs-Evidence decision lens
+- [x] Counterevidence and what-would-change-the-view analysis
 - [x] Why-this-moved workflow
 - [x] Watchlist
 - [x] Panta positions UI
