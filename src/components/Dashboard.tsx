@@ -25,10 +25,36 @@ type MarketActivity = {
 };
 
 type Quote = {
+  quoteId: string;
+  marketId: string;
   shares: string;
   avgPrice: string;
   feeUsdc: string;
   expiresAt: string;
+};
+
+type BuildPreview = {
+  orderId: string;
+  expectedShares: string;
+  feeUsdc: string;
+  status: string;
+  instructionCount: number;
+  programIds: string[];
+  recentBlockhash: string;
+  expiresAt?: string | null;
+  signingRequired: boolean;
+  broadcasted: boolean;
+};
+
+type Position = {
+  marketId: string;
+  category?: string | null;
+  side: string;
+  shares: string;
+  phase: string;
+  claimable: boolean;
+  claimed: boolean;
+  outcome?: string | null;
 };
 
 type HealthResponse = {
@@ -84,6 +110,10 @@ export default function Dashboard() {
   const [side, setSide] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("20");
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [buildPreview, setBuildPreview] = useState<BuildPreview | null>(null);
+  const [buildLoading, setBuildLoading] = useState(false);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [positionsLoading, setPositionsLoading] = useState(false);
   const [error, setError] = useState("");
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [priceDeltas, setPriceDeltas] = useState<Record<string, number>>({});
@@ -221,6 +251,7 @@ export default function Dashboard() {
     setSources([]);
     setActivity(null);
     setQuote(null);
+    setBuildPreview(null);
     requestAnimationFrame(() => {
       document.getElementById("research")?.scrollIntoView({
         behavior: "smooth",
@@ -243,7 +274,7 @@ export default function Dashboard() {
     });
   }
 
-  async function runResearch() {
+  async function runResearch(mode: "research" | "move" = "research") {
     if (!selected) return;
     setAnalysisLoading(true);
     setAnalysis("");
@@ -254,7 +285,17 @@ export default function Dashboard() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(selected),
+        body: JSON.stringify({
+          market: selected,
+          mode,
+          context: mode === "move"
+            ? {
+                priceDeltaYes: priceDeltas[selected.marketId] ?? null,
+                activity,
+                observedAt: new Date().toISOString(),
+              }
+            : undefined,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Research failed");
@@ -275,6 +316,7 @@ export default function Dashboard() {
   async function getQuote() {
     if (!selected || !wallet) return;
     setQuote(null);
+    setBuildPreview(null);
     setError("");
 
     try {
@@ -295,6 +337,66 @@ export default function Dashboard() {
       setError(err instanceof Error ? err.message : "Quote failed");
     }
   }
+
+  async function buildUnsignedTransaction() {
+    if (!quote || !wallet) return;
+    setBuildLoading(true);
+    setBuildPreview(null);
+    setError("");
+
+    try {
+      const res = await fetch("/api/build", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          quoteId: quote.quoteId,
+          wallet,
+          maxSlippageBps: 100,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Transaction build failed");
+      setBuildPreview(json);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Transaction build failed");
+    } finally {
+      setBuildLoading(false);
+    }
+  }
+
+  async function loadPositions() {
+    if (!wallet) return;
+    setPositionsLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(
+        "/api/positions?wallet=" + encodeURIComponent(wallet),
+        {cache: "no-store"},
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Unable to load positions");
+      setPositions(Array.isArray(json.positions) ? json.positions : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load positions");
+    } finally {
+      setPositionsLoading(false);
+    }
+  }
+
+  function activePositionValue(position: Position) {
+    const market = data?.markets.find((item) => item.marketId === position.marketId);
+    if (!market || position.outcome || position.claimable) return null;
+    const price = position.side.toLowerCase() === "yes" ? market.yes : market.no;
+    const shares = Number(position.shares);
+    if (price == null || !Number.isFinite(shares)) return null;
+    return shares * price;
+  }
+
+  const estimatedPortfolio = positions.reduce((sum, position) => {
+    const value = activePositionValue(position);
+    return value == null ? sum : sum + value;
+  }, 0);
 
   return (
     <main className="shell">
@@ -528,10 +630,17 @@ export default function Dashboard() {
               <div className="controls">
                 <button
                   className="btn primary"
-                  onClick={runResearch}
+                  onClick={() => runResearch("research")}
                   disabled={analysisLoading}
                 >
                   {analysisLoading ? "Researching the web…" : "Generate research brief"}
+                </button>
+                <button
+                  className="btn"
+                  onClick={() => runResearch("move")}
+                  disabled={analysisLoading}
+                >
+                  Why did this market move?
                 </button>
                 <button
                   className={"btn " + (watchlist.includes(selected.marketId) ? "watching" : "")}
@@ -614,6 +723,15 @@ export default function Dashboard() {
                 >
                   Get quote
                 </button>
+                {quote && (
+                  <button
+                    className="btn"
+                    disabled={buildLoading}
+                    onClick={buildUnsignedTransaction}
+                  >
+                    {buildLoading ? "Building…" : "Build unsigned transaction"}
+                  </button>
+                )}
               </div>
 
               {selected.phase !== "primary" && (
@@ -630,13 +748,78 @@ export default function Dashboard() {
                   <span>Expires {new Date(quote.expiresAt).toLocaleTimeString()}</span>
                 </div>
               )}
+
+              {buildPreview && (
+                <div className="buildResult">
+                  <div className="buildResultTop">
+                    <strong>Unsigned Solana transaction ready</strong>
+                    <span>{buildPreview.instructionCount} instructions</span>
+                  </div>
+                  <span>Expected shares {buildPreview.expectedShares}</span>
+                  <span>Order {buildPreview.orderId}</span>
+                  <span>{buildPreview.programIds.length} program{buildPreview.programIds.length === 1 ? "" : "s"} involved</span>
+                  <div className="safetyPill">Wallet signature still required · nothing broadcast</div>
+                </div>
+              )}
+
+              <div className="portfolioBlock">
+                <div className="portfolioHead">
+                  <div>
+                    <div className="eyebrow">Wallet intelligence</div>
+                    <h3>Panta positions</h3>
+                  </div>
+                  <button
+                    className="btn"
+                    disabled={!wallet || positionsLoading}
+                    onClick={loadPositions}
+                  >
+                    {positionsLoading ? "Loading…" : "Load positions"}
+                  </button>
+                </div>
+
+                {!!positions.length && (
+                  <div className="portfolioSummary">
+                    <strong>{positions.length} position{positions.length === 1 ? "" : "s"}</strong>
+                    <span>Active mark-to-market ~{estimatedPortfolio.toFixed(2)} USDC</span>
+                  </div>
+                )}
+
+                <div className="positionList">
+                  {positions.slice(0, 6).map((position) => {
+                    const value = activePositionValue(position);
+                    return (
+                      <div className="positionRow" key={position.marketId + position.side}>
+                        <div>
+                          <strong>{position.side.toUpperCase()} · {Number(position.shares).toLocaleString()} shares</strong>
+                          <span>{position.category ?? "Panta market"} · {position.marketId.slice(0, 7)}…</span>
+                        </div>
+                        <div className="positionValue">
+                          {position.claimable
+                            ? "Claimable"
+                            : position.outcome
+                              ? "Resolved"
+                              : value == null
+                                ? "—"
+                                : "~" + value.toFixed(2) + " USDC"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!positionsLoading && wallet && positions.length === 0 && (
+                    <div className="small portfolioEmpty">
+                      Load this public wallet to inspect Panta positions. No keys or signing permissions are requested.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </section>
       )}
 
       <footer className="footer">
-        <b>Powered by Panta</b> · SignalDesk is an independent research interface.
+        <a href="https://panta.market" target="_blank" rel="noreferrer"><b>Powered by Panta</b></a>
+        {" · "}SignalDesk is an independent research interface.
         Research scores prioritize attention; they are not expected-return estimates or financial advice.
       </footer>
     </main>
