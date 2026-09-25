@@ -8,6 +8,7 @@ export async function GET() {
     pantaConfigured: Boolean(pantaKey),
     openaiConfigured: Boolean(openaiKey),
     openaiAuthOk: false,
+    openaiStatus: null as number | null,
   };
 
   if (openaiKey) {
@@ -16,6 +17,7 @@ export async function GET() {
         headers: {Authorization: `Bearer ${openaiKey}`},
         cache: "no-store",
       });
+      result.openaiStatus = response.status;
       result.openaiAuthOk = response.ok;
     } catch {
       result.openaiAuthOk = false;
