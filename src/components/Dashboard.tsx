@@ -488,12 +488,11 @@ export default function Dashboard() {
       <section className="hero">
         <div className="heroCard">
           <div>
-            <div className="eyebrow">Research before execution</div>
-            <h1>Turn market noise into a research queue.</h1>
+            <div className="eyebrow">Simple market research</div>
+            <h1>Understand a market in 30 seconds.</h1>
             <p className="sub heroCopy">
-              SignalDesk scans Panta, prioritizes markets by activity, uncertainty
-              and timing, then uses an AI research agent to explain what matters and
-              what to verify next.
+              Pick a Panta market. SignalDesk checks the facts, explains the situation
+              in plain English, and shows what to watch next.
             </p>
           </div>
           <div className="controls">
@@ -507,12 +506,12 @@ export default function Dashboard() {
         </div>
 
         <div className="heroCard metrics">
-          <Metric value={String(data?.markets.length ?? 0)} label="markets scored" />
+          <Metric value={String(data?.markets.length ?? 0)} label="markets" />
           <Metric value={usd(totalVolume)} label="visible volume" />
-          <Metric value={top?.signalScore.toFixed(0) ?? "—"} label="top research score" />
+          <Metric value={top?.signalScore.toFixed(0) ?? "—"} label="top priority" />
           <Metric
-            value={String(data?.markets.filter((market) => market.phase === "secondary").length ?? 0)}
-            label="secondary markets"
+            value={String(data?.markets.filter((market) => (market.daysToClose ?? -1) >= 0).length ?? 0)}
+            label="current markets"
           />
         </div>
       </section>
@@ -520,7 +519,7 @@ export default function Dashboard() {
       {top && (
         <section className="spotlight">
           <div>
-            <div className="eyebrow">Highest-priority research</div>
+            <div className="eyebrow">Start here</div>
             <h2>{marketLabel(top)}</h2>
             <p className="sub">{top.attentionReason} · {daysLabel(top.daysToClose)}</p>
           </div>
@@ -530,7 +529,7 @@ export default function Dashboard() {
             <div><span>Volume</span><strong>{usd(top.volume)}</strong></div>
           </div>
           <button className="btn primary" onClick={() => chooseMarket(top)}>
-            Research this market
+            Explain this market
           </button>
         </section>
       )}
@@ -540,8 +539,8 @@ export default function Dashboard() {
       <section className="scannerHeader">
         <div className="scannerTitle">
           <div>
-            <div className="eyebrow">Market scanner</div>
-            <h2>Research queue</h2>
+            <div className="eyebrow">Choose a market</div>
+            <h2>Markets to explore</h2>
           </div>
           <button
             className={"btn watchlistToggle " + (watchlistOnly ? "watching" : "")}
@@ -637,13 +636,13 @@ export default function Dashboard() {
         <section className="drawer" id="research">
           <div className="drawerGrid">
             <div>
-              <div className="eyebrow">AI research agent</div>
+              <div className="eyebrow">Simple research</div>
               <h2>{marketLabel(selected)}</h2>
               <p className="sub">
                 {marketDescription(selected)}
               </p>
 
-              {selected.images?.[0] && (
+              {!selected.title?.trim() && selected.images?.[0] && (
                 <div className="researchImage">
                   <img src={selected.images[0]} alt="" />
                   {!selected.title?.trim() && (
