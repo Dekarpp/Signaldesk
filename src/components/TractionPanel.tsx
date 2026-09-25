@@ -44,15 +44,20 @@ export default function TractionPanel() {
   }
 
   return (
-    <section className="tractionPanel">
-      <div>
-        <div className="eyebrow">Early tester feedback</div>
-        <h2>Help us validate SignalDesk.</h2>
+    <details className="tractionPanel">
+      <summary>
+        <div>
+          <div className="eyebrow">Quick feedback</div>
+          <strong>Was SignalDesk easy to understand?</strong>
+        </div>
+        <span>30 seconds</span>
+      </summary>
+
+      <div className="tractionBody">
         <p className="sub">
-          Try one research flow, then leave a quick rating. Please do not include
+          Rate the experience and tell us one thing to improve. Please do not include
           personal or sensitive information.
         </p>
-      </div>
 
       <div className="tractionGrid">
         <label>
@@ -95,6 +100,7 @@ export default function TractionPanel() {
         </button>
         {status && <span className="small">{status}</span>}
       </div>
-    </section>
+      </div>
+    </details>
   );
 }
