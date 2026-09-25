@@ -751,3 +751,55 @@ h3 { letter-spacing: -.02em; }
   .integrationBadge { display: none; }
   .deadlineRow { align-items: flex-start; flex-direction: column; }
 }
+
+
+.marketImage {
+  position: relative;
+  overflow: hidden;
+  height: 132px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #080b10;
+  margin: 10px 0 12px;
+}
+
+.marketImage img,
+.researchImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.marketImage span {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  max-width: calc(100% - 16px);
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: rgba(7,9,13,.82);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #d6deea;
+  font-size: 10px;
+  backdrop-filter: blur(8px);
+}
+
+.researchImage {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-3);
+  margin-top: 12px;
+}
+
+.researchImage img {
+  max-height: 290px;
+  object-fit: contain;
+}
+
+.researchImage .small {
+  display: block;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
