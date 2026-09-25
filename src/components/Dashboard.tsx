@@ -107,6 +107,17 @@ const marketLabel = (market: SignalMarket) => {
   const title = market.title?.trim();
   if (title) return title;
   const category = (market.category ?? "market").replace(/\b\w/g, (c) => c.toUpperCase());
+  const sourceNames = String(market.oracle ?? "")
+    .split(",")
+    .map((item) => item.trim().split("-").at(-1))
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((item) => String(item).replace(/\b\w/g, (c) => c.toUpperCase()));
+
+  if (sourceNames.length) {
+    return category + " market · " + sourceNames.join(" / ");
+  }
+
   return category + " market · " + market.marketId.slice(0, 7) + "…" + market.marketId.slice(-5);
 };
 
@@ -150,6 +161,7 @@ export default function Dashboard() {
   const [priceHistory, setPriceHistory] = useState<Record<string, PricePoint[]>>({});
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const [watchlistOnly, setWatchlistOnly] = useState(false);
+  const [showPast, setShowPast] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [phase, setPhase] = useState("all");
@@ -280,7 +292,8 @@ export default function Dashboard() {
       const matchesCategory = category === "all" || market.category === category;
       const matchesPhase = phase === "all" || market.phase === phase;
       const matchesWatchlist = !watchlistOnly || watchlist.includes(market.marketId);
-      return matchesSearch && matchesCategory && matchesPhase && matchesWatchlist;
+      const matchesTime = showPast || (market.daysToClose ?? -1) >= 0;
+      return matchesSearch && matchesCategory && matchesPhase && matchesWatchlist && matchesTime;
     });
 
     items.sort((a, b) => {
@@ -293,7 +306,7 @@ export default function Dashboard() {
     });
 
     return items;
-  }, [data, query, category, phase, sort, watchlist, watchlistOnly]);
+  }, [data, query, category, phase, sort, watchlist, watchlistOnly, showPast]);
 
   const totalVolume = useMemo(
     () => data?.markets.reduce((sum, market) => sum + market.volume, 0) ?? 0,
@@ -500,6 +513,18 @@ export default function Dashboard() {
     selected.yes != null &&
     selected.no != null;
 
+  const researchAvailable =
+    Boolean(selected?.title?.trim()) ||
+    Boolean(selected?.description?.trim()) ||
+    Boolean(selected?.images?.[0]);
+
+  const moveAvailable =
+    Boolean(selected) &&
+    (
+      Math.abs(priceDeltas[selected!.marketId] ?? 0) >= 0.0001 ||
+      (activity?.tradeCount ?? 0) > 0
+    );
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -535,11 +560,11 @@ export default function Dashboard() {
       <section className="hero">
         <div className="heroCard">
           <div>
-            <div className="eyebrow">Simple market research</div>
-            <h1>Understand a market in 30 seconds.</h1>
+            <div className="eyebrow">Market vs evidence</div>
+            <h1>See what the market thinks — and what the facts say.</h1>
             <p className="sub heroCopy">
-              Pick a Panta market. SignalDesk checks the facts, explains the situation
-              in plain English, and shows what to watch next.
+              SignalDesk turns Panta prices into a fast decision-support view:
+              market odds, evidence direction, counterevidence, and what could change the picture.
             </p>
           </div>
           <div className="controls">
@@ -563,24 +588,6 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {top && (
-        <section className="spotlight">
-          <div>
-            <div className="eyebrow">Start here</div>
-            <h2>{marketLabel(top)}</h2>
-            <p className="sub">{top.attentionReason} · {daysLabel(top.daysToClose)}</p>
-          </div>
-          <div className="spotlightStats">
-            <div><span>Score</span><strong>{top.signalScore.toFixed(0)}</strong></div>
-            <div><span>YES</span><strong>{pct(top.yes)}</strong></div>
-            <div><span>Traded</span><strong>{usd(top.volume)}</strong></div>
-          </div>
-          <button className="btn primary" onClick={() => chooseMarket(top)}>
-            Explain this market
-          </button>
-        </section>
-      )}
-
       {error && <div className="error">{error}</div>}
 
       <section className="scannerHeader">
@@ -589,13 +596,22 @@ export default function Dashboard() {
             <div className="eyebrow">Choose a market</div>
             <h2>Markets to explore</h2>
           </div>
-          <button
-            className={"btn watchlistToggle " + (watchlistOnly ? "watching" : "")}
-            onClick={() => setWatchlistOnly((value) => !value)}
-            aria-pressed={watchlistOnly}
-          >
-            ★ Watchlist · {watchlist.length}
-          </button>
+          <div className="scannerToggles">
+            <button
+              className={"btn watchlistToggle " + (watchlistOnly ? "watching" : "")}
+              onClick={() => setWatchlistOnly((value) => !value)}
+              aria-pressed={watchlistOnly}
+            >
+              ★ Watchlist · {watchlist.length}
+            </button>
+            <button
+              className={"btn " + (showPast ? "watching" : "")}
+              onClick={() => setShowPast((value) => !value)}
+              aria-pressed={showPast}
+            >
+              {showPast ? "Hide past" : "Show past"}
+            </button>
+          </div>
         </div>
         <div className="filterGrid">
           <input
@@ -711,14 +727,15 @@ export default function Dashboard() {
                 <button
                   className="btn primary"
                   onClick={() => runResearch("research")}
-                  disabled={analysisLoading}
+                  disabled={analysisLoading || !researchAvailable}
                 >
                   {analysisLoading ? "Checking sources…" : "Analyze the evidence"}
                 </button>
                 <button
                   className="btn"
                   onClick={() => runResearch("move")}
-                  disabled={analysisLoading}
+                  disabled={analysisLoading || !moveAvailable}
+                  title={moveAvailable ? "Research plausible drivers of the observed move" : "Available after SignalDesk observes a price move or recent Panta trades"}
                 >
                   Explain the move
                 </button>
@@ -732,6 +749,12 @@ export default function Dashboard() {
                   <button className="btn quietBtn" onClick={copyResearch}>Copy</button>
                 )}
               </div>
+
+              {!researchAvailable && (
+                <div className="dataNotice">
+                  Panta has not supplied enough question metadata to research this market safely yet.
+                </div>
+              )}
 
               <div className={"analysis simpleAnalysis " + (brief ? "filled" : "")}>
                 {brief ? (
@@ -768,12 +791,16 @@ export default function Dashboard() {
               )}
             </div>
 
-            <details className="advancedPanel">
+            <details className="advancedPanel developerPanel">
               <summary>
-                <span>Advanced</span>
-                <strong>Wallet & execution</strong>
+                <span>Panta API</span>
+                <strong>Integration demo</strong>
+                <small>For judges & developers · wallet, quote, unsigned build</small>
               </summary>
               <div className="quoteBox">
+              <p className="developerIntro">
+                Advanced Panta integration. This is not needed for the main research experience.
+              </p>
               <div className="eyebrow">Execution preview</div>
               <h3>Preview a primary-market quote</h3>
               <p className="small">
