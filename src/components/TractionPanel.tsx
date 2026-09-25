@@ -38,7 +38,7 @@ export default function TractionPanel() {
   }
 
   async function copyDemo() {
-    await navigator.clipboard.writeText(window.location.origin);
+    await navigator.clipboard.writeText(window.location.origin + "/?utm_source=shared_beta");
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   }
