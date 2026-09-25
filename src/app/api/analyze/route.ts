@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL ?? "gpt-5.6",
         input: prompt,
-        tools: [{type: "web_search"}],
+        tools: sandbox ? [] : [{type: "web_search"}],
         reasoning: {effort: "low"},
         max_output_tokens: 1400,
         store: false,
