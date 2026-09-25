@@ -14,6 +14,16 @@ type MarketsResponse = {
 
 type Citation = {title: string; url: string};
 
+type MarketActivity = {
+  tradeCount: number;
+  yesFlow: number;
+  noFlow: number;
+  fees: number;
+  primaryTrades: number;
+  secondaryTrades: number;
+  latestBlockTime: number | null;
+};
+
 type Quote = {
   shares: string;
   avgPrice: string;
@@ -47,6 +57,8 @@ export default function Dashboard() {
   const [analysis, setAnalysis] = useState("");
   const [sources, setSources] = useState<Citation[]>([]);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [activity, setActivity] = useState<MarketActivity | null>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
   const [wallet, setWallet] = useState("");
   const [side, setSide] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("20");
@@ -81,6 +93,31 @@ export default function Dashboard() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    if (!selected) return;
+    const controller = new AbortController();
+
+    async function loadActivity() {
+      setActivityLoading(true);
+      try {
+        const res = await fetch(
+          "/api/market-activity?marketId=" + encodeURIComponent(selected.marketId),
+          {cache: "no-store", signal: controller.signal},
+        );
+        const json = await res.json();
+        if (res.ok) setActivity(json);
+        else setActivity(null);
+      } catch {
+        if (!controller.signal.aborted) setActivity(null);
+      } finally {
+        if (!controller.signal.aborted) setActivityLoading(false);
+      }
+    }
+
+    void loadActivity();
+    return () => controller.abort();
+  }, [selected?.marketId]);
 
   const filtered = useMemo(() => {
     const items = [...(data?.markets ?? [])].filter((market) => {
@@ -118,6 +155,7 @@ export default function Dashboard() {
     setSelected(market);
     setAnalysis("");
     setSources([]);
+    setActivity(null);
     setQuote(null);
     requestAnimationFrame(() => {
       document.getElementById("research")?.scrollIntoView({
@@ -350,7 +388,20 @@ export default function Dashboard() {
                 <span>Research score <b>{selected.signalScore.toFixed(0)}</b></span>
                 <span>Implied YES <b>{pct(selected.yes)}</b></span>
                 <span>{daysLabel(selected.daysToClose)}</span>
+                <span>
+                  {activityLoading ? "Loading activity…" : "Recent trades "}
+                  {!activityLoading && <b>{activity?.tradeCount ?? 0}</b>}
+                </span>
               </div>
+
+              {activity && (
+                <div className="activityStrip">
+                  <div><span>YES flow</span><strong>{activity.yesFlow.toFixed(2)}</strong></div>
+                  <div><span>NO flow</span><strong>{activity.noFlow.toFixed(2)}</strong></div>
+                  <div><span>Primary</span><strong>{activity.primaryTrades}</strong></div>
+                  <div><span>Secondary</span><strong>{activity.secondaryTrades}</strong></div>
+                </div>
+              )}
 
               <div className="controls">
                 <button
@@ -366,8 +417,11 @@ export default function Dashboard() {
               </div>
 
               <div className={"analysis " + (analysis ? "filled" : "")}>
-                {analysis ||
-                  "The agent will separate facts from uncertainty, inspect catalysts and resolution mechanics, and produce watch triggers. It does not choose a trade for you."}
+                {analysis ? (
+                  <ResearchBrief text={analysis} />
+                ) : (
+                  "The agent will separate facts from uncertainty, inspect catalysts and resolution mechanics, and produce watch triggers. It does not choose a trade for you."
+                )}
               </div>
 
               {!!sources.length && (
@@ -458,6 +512,24 @@ export default function Dashboard() {
         Research scores prioritize attention; they are not expected-return estimates or financial advice.
       </footer>
     </main>
+  );
+}
+
+function ResearchBrief({text}: {text: string}) {
+  return (
+    <div className="brief">
+      {text.split("\n").map((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div className="briefSpace" key={index} />;
+        if (trimmed.startsWith("## ")) {
+          return <h3 key={index}>{trimmed.slice(3)}</h3>;
+        }
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+          return <div className="briefBullet" key={index}>{trimmed.slice(2)}</div>;
+        }
+        return <p key={index}>{trimmed}</p>;
+      })}
+    </div>
   );
 }
 
