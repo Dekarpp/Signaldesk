@@ -27,3 +27,6 @@ OPENAI_MODEL=gpt-5.6
 ```
 
 SignalDesk does not auto-trade. Research and execution remain separate, and any signing/broadcasting step must require explicit wallet confirmation.
+
+
+Deployment is managed by Vercel Git integration.
