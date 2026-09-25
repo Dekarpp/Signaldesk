@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
     const access = String(body?.access ?? "").trim();
     const name = String(body?.name ?? "signaldesk").trim();
     const env = body?.env === "live" ? "live" : "test";
-    const env = body?.env === "live" ? "live" : "test";
 
     if (!access) {
       return NextResponse.json({error: "Access token is required."}, {status: 400});
