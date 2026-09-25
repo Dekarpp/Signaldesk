@@ -1535,3 +1535,350 @@ h1 {
     display: none;
   }
 }
+
+
+/* Visual answer-first market dashboard */
+.snapshot {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(185,255,102,.035), transparent 44%),
+    var(--panel-3);
+  padding: 18px;
+}
+
+.snapshotTop {
+  display: grid;
+  grid-template-columns: 164px minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+}
+
+.probabilityGauge {
+  position: relative;
+  width: 154px;
+  height: 154px;
+}
+
+.probabilityGauge svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.gaugeTrack,
+.gaugeValue {
+  fill: none;
+  stroke-width: 10;
+}
+
+.gaugeTrack {
+  stroke: #202833;
+}
+
+.gaugeValue {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset .35s ease;
+}
+
+.gaugeCenter {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.gaugeCenter strong {
+  color: var(--text);
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+
+.gaugeCenter span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.snapshotEyebrow {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+.snapshotSummary h3 {
+  margin: 5px 0 6px;
+  font-size: 24px;
+}
+
+.snapshotSummary p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.balanceBar,
+.flowBar {
+  position: relative;
+  overflow: hidden;
+  height: 10px;
+  margin-top: 16px;
+  border-radius: 999px;
+  background: #28313d;
+}
+
+.balanceYes,
+.flowBar > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.balanceLabels,
+.flowLabels,
+.sparkMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.snapshotMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 17px;
+}
+
+.snapshotMetrics > div {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.014);
+  border-radius: 12px;
+  padding: 11px 12px;
+}
+
+.snapshotMetrics span,
+.visualHead span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.snapshotMetrics strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.visualGrid {
+  display: grid;
+  grid-template-columns: 1.35fr .65fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.visualCard {
+  min-height: 160px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(8,11,16,.52);
+  padding: 13px;
+}
+
+.visualHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.visualHead strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.visualHead small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.sparklineWrap {
+  margin-top: 10px;
+}
+
+.sparkline {
+  display: block;
+  width: 100%;
+  height: 82px;
+  overflow: visible;
+}
+
+.sparkGrid {
+  stroke: #202833;
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.sparkPath {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.sparkPoint {
+  fill: var(--panel-3);
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.sparkMeta strong {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.chartEmpty {
+  display: grid;
+  place-items: center;
+  min-height: 94px;
+  margin-top: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 11px;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.flowBar {
+  height: 18px;
+  margin-top: 28px;
+}
+
+.flowBar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(255,255,255,.28);
+}
+
+.researchActions {
+  padding-top: 2px;
+}
+
+.researchActions .primary {
+  min-width: 190px;
+}
+
+.deepDive {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.deepDive > summary {
+  cursor: pointer;
+  list-style: none;
+  padding-top: 14px;
+  color: #d8e0ea;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.deepDive > summary::-webkit-details-marker {
+  display: none;
+}
+
+.deepDive > summary::after {
+  content: "+";
+  float: right;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.deepDive[open] > summary::after {
+  content: "−";
+}
+
+.deepDiveBody {
+  padding-top: 2px;
+}
+
+@media (max-width: 760px) {
+  .snapshotTop {
+    grid-template-columns: 126px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .probabilityGauge {
+    width: 118px;
+    height: 118px;
+  }
+
+  .gaugeCenter strong {
+    font-size: 28px;
+  }
+
+  .snapshotSummary h3 {
+    font-size: 20px;
+  }
+
+  .snapshotMetrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .visualGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .snapshot {
+    padding: 14px;
+  }
+
+  .snapshotTop {
+    grid-template-columns: 1fr;
+  }
+
+  .probabilityGauge {
+    width: 136px;
+    height: 136px;
+    margin: 0 auto;
+  }
+
+  .snapshotSummary {
+    text-align: center;
+  }
+
+  .balanceLabels,
+  .flowLabels {
+    text-align: left;
+  }
+
+  .snapshotMetrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}
