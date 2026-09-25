@@ -31,8 +31,19 @@ export function getMarket(marketId: string) {
   return pantaFetch<PantaMarket>(`/markets/${encodeURIComponent(marketId)}/`);
 }
 
+export type PantaPosition = {
+  marketId: string;
+  category?: string | null;
+  side: string;
+  shares: string;
+  phase: string;
+  claimable: boolean;
+  claimed: boolean;
+  outcome?: string | null;
+};
+
 export function getPositions(wallet: string) {
-  return pantaFetch<{wallet: string; positions: unknown[]}>(
+  return pantaFetch<{wallet: string; positions: PantaPosition[]}>(
     `/positions/?wallet=${encodeURIComponent(wallet)}`,
   );
 }
@@ -55,6 +66,45 @@ export function quotePrimaryBuy(input: {
   }>("/primaryorderquote/", {
     method: "POST",
     body: JSON.stringify(input),
+  });
+}
+
+export type PrimaryBuild = {
+  orderId: string;
+  quoteId: string;
+  wallet: string;
+  marketId: string;
+  side: string;
+  amountUsdc: string;
+  expectedShares: string;
+  feeUsdc: string;
+  status: string;
+  instructions: Array<{
+    programId: string;
+    data: string;
+    accounts: Array<{
+      pubkey: string;
+      isSigner: boolean;
+      isWritable: boolean;
+    }>;
+  }>;
+  recentBlockhash: string;
+  lastValidBlockHeight?: number;
+  expiresAt?: string;
+};
+
+export function buildPrimaryBuy(input: {
+  quoteId: string;
+  wallet: string;
+  maxSlippageBps?: number;
+}) {
+  return pantaFetch<PrimaryBuild>("/primaryorderbuild/", {
+    method: "POST",
+    body: JSON.stringify({
+      quoteId: input.quoteId,
+      wallet: input.wallet,
+      maxSlippageBps: input.maxSlippageBps ?? 100,
+    }),
   });
 }
 
