@@ -189,9 +189,9 @@ Select a primary market.
 
 Show:
 - load a public wallet's Panta positions
-- show that execution stays disabled when the selected Panta market has no executable live pricing
-- instruction count
-- human-confirmation badge
+- select a Panta primary market
+- show that execution stays disabled when the selected live market has no executable YES/NO pricing
+- human-confirmation / execution-boundary messaging
 
 Say:
 
@@ -238,8 +238,8 @@ Live demo: https://signaldesk-henna.vercel.app
 - [x] Why-this-moved workflow
 - [x] Watchlist
 - [x] Panta positions UI
-- [x] Panta quote preview
-- [x] Panta unsigned transaction build
+- [x] Guarded Panta quote adapter / preview
+- [x] Panta unsigned transaction build adapter
 - [x] Powered by Panta attribution
 - [x] Human-confirmed execution boundary
 - [x] Responsive UI
@@ -254,3 +254,4 @@ Live demo: https://signaldesk-henna.vercel.app
 - [ ] Submit the same project separately to Panta API Sidetrack on Superteam Earn
 - [ ] Add any public demo-video URL to both submissions
 - [ ] Final human review before publishing
+- [ ] Re-test live Panta quote/build if an execution-ready primary market appears
