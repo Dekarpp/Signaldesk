@@ -1,0 +1,25 @@
+name: Cost guard smoke
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify AI rate limit
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://signaldesk-henna.vercel.app"
+          MARKET="$(curl -fsS "$BASE/api/markets" | jq -c '[.markets[] | select(.title | contains("GTA 6"))][0]')"
+          test "$MARKET" != "null"
+          PAYLOAD="$(jq -n --argjson market "$MARKET" '{market:$market,mode:"research"}')"
+          LAST=""
+          for i in $(seq 1 9); do
+            LAST="$(curl -sS -o /tmp/body -w '%{http_code}' -X POST "$BASE/api/analyze"               -H 'content-type: application/json'               -H 'x-signaldesk-client: cost-guard-smoke'               --data "$PAYLOAD")"
+            echo "attempt=$i status=$LAST"
+          done
+          test "$LAST" = "429"
+          cat /tmp/body
