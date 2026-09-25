@@ -95,8 +95,8 @@ const marketLabel = (market: SignalMarket) => {
 const marketDescription = (market: SignalMarket) => {
   const description = market.description?.trim();
   if (description) return description;
-  if (market.oracle) return "Panta metadata is incomplete. Oracle: " + market.oracle;
-  return "Panta metadata is incomplete. Open the market to inspect image and on-chain context.";
+  if (market.oracle) return "Panta did not send a text question. Oracle: " + market.oracle;
+  return "Panta did not send a text question for this market.";
 };
 
 const daysLabel = (days: number | null) => {
@@ -908,7 +908,7 @@ function SimpleResearchBrief({brief}: {brief: SimpleBrief}) {
           <h3>{brief.title}</h3>
         </div>
         <span className={"confidence confidence" + brief.confidence}>
-          {brief.confidence} confidence
+          Evidence: {brief.confidence}
         </span>
       </div>
 
