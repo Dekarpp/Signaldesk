@@ -1013,6 +1013,28 @@ function MarketSnapshot({
         <div className="visualCard">
           <div className="visualHead">
             <div>
+              <span>Why it is interesting</span>
+              <strong>Research priority</strong>
+            </div>
+            <small>{market.signalScore.toFixed(0)}/100</small>
+          </div>
+          <ScoreBars market={market} />
+        </div>
+
+        <div className="visualCard">
+          <div className="visualHead">
+            <div>
+              <span>Market timeline</span>
+              <strong>{daysLabel(market.daysToClose)}</strong>
+            </div>
+            <small>{market.phase}</small>
+          </div>
+          <MarketTimeline market={market} />
+        </div>
+
+        <div className="visualCard">
+          <div className="visualHead">
+            <div>
               <span>YES price history</span>
               <strong>SignalDesk snapshots</strong>
             </div>
@@ -1047,6 +1069,69 @@ function MarketSnapshot({
       </div>
     </div>
   );
+}
+
+function ScoreBars({market}: {market: SignalMarket}) {
+  const rows = [
+    {label: "Activity", value: market.liquidityScore},
+    {label: "Uncertainty", value: market.disagreementScore},
+    {label: "Timing", value: market.timingScore},
+  ];
+
+  return (
+    <div className="scoreBars">
+      {rows.map((row) => (
+        <div className="scoreBarRow" key={row.label}>
+          <div className="scoreBarLabel">
+            <span>{row.label}</span>
+            <strong>{Math.round(row.value)}</strong>
+          </div>
+          <div className="scoreBarTrack">
+            <div style={{width: Math.max(0, Math.min(100, row.value)) + "%"}} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MarketTimeline({market}: {market: SignalMarket}) {
+  const start = epochMs(market.startTime);
+  const end = epochMs(market.endTime ?? market.resolutionTime);
+  const now = Date.now();
+
+  if (start == null || end == null || end <= start) {
+    return <div className="chartEmpty">Panta did not provide a complete timeline.</div>;
+  }
+
+  const progress = Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
+
+  return (
+    <div className="timelineChart">
+      <div className="timelineTrack">
+        <div style={{width: progress + "%"}} />
+        <span style={{left: progress + "%"}} />
+      </div>
+      <div className="timelineLabels">
+        <span>Opened<br /><b>{shortDate(start)}</b></span>
+        <span>Now</span>
+        <span>Closes<br /><b>{shortDate(end)}</b></span>
+      </div>
+    </div>
+  );
+}
+
+function epochMs(value?: number | string) {
+  if (value == null) return null;
+  if (typeof value === "number") return value > 10_000_000_000 ? value : value * 1000;
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) return numeric > 10_000_000_000 ? numeric : numeric * 1000;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function shortDate(ms: number) {
+  return new Intl.DateTimeFormat("en-US", {month: "short", day: "numeric"}).format(new Date(ms));
 }
 
 function PriceSparkline({points}: {points: PricePoint[]}) {
