@@ -1,0 +1,44 @@
+import {NextRequest, NextResponse} from "next/server";
+
+const BASE = process.env.PANTA_API_BASE_URL ?? "https://live-api.panta.market/api/v1";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const email = String(body?.email ?? "").trim();
+    const password = String(body?.password ?? "");
+    const name = String(body?.name ?? "").trim();
+
+    if (!email || !password) {
+      return NextResponse.json({error: "Email and password are required."}, {status: 400});
+    }
+
+    const response = await fetch(`${BASE}/auth/register/`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({email, password, ...(name ? {name} : {})}),
+      cache: "no-store",
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return NextResponse.json(
+        {error: data?.message ?? data?.detail ?? data?.code ?? `Panta returned ${response.status}`},
+        {status: response.status},
+      );
+    }
+
+    return NextResponse.json({
+      userId: data.userId,
+      email: data.email,
+      name: data.name,
+      access: data.access,
+      refresh: data.refresh,
+    }, {status: 201});
+  } catch (error) {
+    return NextResponse.json(
+      {error: error instanceof Error ? error.message : "Registration failed."},
+      {status: 500},
+    );
+  }
+}
