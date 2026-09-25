@@ -507,7 +507,7 @@ export default function Dashboard() {
 
         <div className="heroCard metrics">
           <Metric value={String(data?.markets.length ?? 0)} label="markets" />
-          <Metric value={usd(totalVolume)} label="visible volume" />
+          <Metric value={usd(totalVolume)} label="money traded" />
           <Metric value={top?.signalScore.toFixed(0) ?? "—"} label="top priority" />
           <Metric
             value={String(data?.markets.filter((market) => (market.daysToClose ?? -1) >= 0).length ?? 0)}
@@ -612,7 +612,7 @@ export default function Dashboard() {
 
             <div className="cardFooter">
               <span>{market.attentionReason}</span>
-              <span>{usd(market.volume)} volume</span>
+              <span>{usd(market.volume)} traded</span>
             </div>
 
             {typeof priceDeltas[market.marketId] === "number" && Math.abs(priceDeltas[market.marketId]) >= 0.0001 && (
