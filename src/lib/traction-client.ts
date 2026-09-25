@@ -42,5 +42,6 @@ export function trackSession() {
   const now = Date.now();
   if (Number.isFinite(previous) && now - previous < SESSION_WINDOW_MS) return;
   window.localStorage.setItem(SESSION_KEY, String(now));
-  void trackTraction("session");
+  const source = new URLSearchParams(window.location.search).get("utm_source") ?? undefined;
+  void trackTraction("session", {source});
 }
