@@ -6,8 +6,13 @@ import type {SignalMarket} from "@/lib/types";
 type MarketsResponse = {
   markets: SignalMarket[];
   fetchedAt: string;
+  mode: "test" | "live";
+  sandbox: boolean;
+  categories: string[];
   error?: string;
 };
+
+type Citation = {title: string; url: string};
 
 type Quote = {
   shares: string;
@@ -24,19 +29,33 @@ const usd = (n: number) =>
   }).format(n);
 
 const pct = (n: number | null) =>
-  n == null ? "—" : `${Math.round(n * 100)}%`;
+  n == null ? "—" : Math.round(n * 100) + "%";
+
+const daysLabel = (days: number | null) => {
+  if (days == null) return "No deadline";
+  if (days < 0) return "Closed";
+  if (days < 1) return "Closes today";
+  if (days < 2) return "1 day left";
+  if (days < 30) return Math.ceil(days) + " days left";
+  return Math.ceil(days / 30) + " mo left";
+};
 
 export default function Dashboard() {
   const [data, setData] = useState<MarketsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<SignalMarket | null>(null);
   const [analysis, setAnalysis] = useState("");
+  const [sources, setSources] = useState<Citation[]>([]);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [wallet, setWallet] = useState("");
   const [side, setSide] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("20");
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("all");
+  const [phase, setPhase] = useState("all");
+  const [sort, setSort] = useState<"signal" | "volume" | "deadline">("signal");
 
   async function refresh() {
     setLoading(true);
@@ -46,7 +65,12 @@ export default function Dashboard() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Unable to load markets");
       setData(json);
-      if (!selected && json.markets?.length) setSelected(json.markets[0]);
+      if (json.markets?.length) {
+        setSelected((current) => {
+          if (!current) return json.markets[0];
+          return json.markets.find((m: SignalMarket) => m.marketId === current.marketId) ?? json.markets[0];
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load markets");
     } finally {
@@ -58,15 +82,56 @@ export default function Dashboard() {
     void refresh();
   }, []);
 
+  const filtered = useMemo(() => {
+    const items = [...(data?.markets ?? [])].filter((market) => {
+      const search = query.trim().toLowerCase();
+      const matchesSearch =
+        !search ||
+        market.title.toLowerCase().includes(search) ||
+        market.description?.toLowerCase().includes(search) ||
+        market.category?.toLowerCase().includes(search);
+      const matchesCategory = category === "all" || market.category === category;
+      const matchesPhase = phase === "all" || market.phase === phase;
+      return matchesSearch && matchesCategory && matchesPhase;
+    });
+
+    items.sort((a, b) => {
+      if (sort === "volume") return b.volume - a.volume;
+      if (sort === "deadline") {
+        return (a.daysToClose ?? Number.MAX_SAFE_INTEGER) -
+          (b.daysToClose ?? Number.MAX_SAFE_INTEGER);
+      }
+      return b.signalScore - a.signalScore;
+    });
+
+    return items;
+  }, [data, query, category, phase, sort]);
+
   const totalVolume = useMemo(
     () => data?.markets.reduce((sum, market) => sum + market.volume, 0) ?? 0,
     [data],
   );
 
+  const top = filtered[0] ?? data?.markets[0] ?? null;
+
+  function chooseMarket(market: SignalMarket) {
+    setSelected(market);
+    setAnalysis("");
+    setSources([]);
+    setQuote(null);
+    requestAnimationFrame(() => {
+      document.getElementById("research")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+
   async function runResearch() {
     if (!selected) return;
     setAnalysisLoading(true);
     setAnalysis("");
+    setSources([]);
     setError("");
 
     try {
@@ -78,11 +143,17 @@ export default function Dashboard() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Research failed");
       setAnalysis(json.analysis);
+      setSources(Array.isArray(json.sources) ? json.sources : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Research failed");
     } finally {
       setAnalysisLoading(false);
     }
+  }
+
+  async function copyResearch() {
+    if (!analysis) return;
+    await navigator.clipboard.writeText(analysis);
   }
 
   async function getQuote() {
@@ -114,102 +185,172 @@ export default function Dashboard() {
       <header className="topbar">
         <div className="brand">
           <div className="logo">S</div>
-          SignalDesk
+          <div>
+            <div>SignalDesk</div>
+            <div className="brandSub">Prediction-market intelligence</div>
+          </div>
         </div>
-        <div className="badge">Research-first · human-confirmed actions</div>
+        <div className="statusRow">
+          <span className={"statusDot " + (data ? "online" : "")} />
+          <span>{data ? "Panta connected" : "Connecting…"}</span>
+          <span className={"modeBadge " + (data?.sandbox ? "sandbox" : "live")}>
+            {data?.sandbox ? "SANDBOX" : "LIVE"}
+          </span>
+        </div>
       </header>
+
+      {data?.sandbox && (
+        <section className="sandboxBanner">
+          <strong>Sandbox mode.</strong>
+          <span>
+            Your pk_test key is connected correctly. Panta is returning fixture markets,
+            so no real funds or mainnet markets are involved yet.
+          </span>
+        </section>
+      )}
 
       <section className="hero">
         <div className="heroCard">
           <div>
-            <div className="eyebrow">AI + prediction markets</div>
-            <h1>Find the market worth understanding.</h1>
-            <p className="sub">
-              SignalDesk ranks live Panta markets by information value,
-              liquidity and timing, then generates a fresh research brief
-              before any action.
+            <div className="eyebrow">Research before execution</div>
+            <h1>Turn market noise into a research queue.</h1>
+            <p className="sub heroCopy">
+              SignalDesk scans Panta, prioritizes markets by activity, uncertainty
+              and timing, then uses an AI research agent to explain what matters and
+              what to verify next.
             </p>
           </div>
           <div className="controls">
             <button className="btn primary" onClick={refresh} disabled={loading}>
-              {loading ? "Scanning…" : "Scan Panta"}
+              {loading ? "Scanning Panta…" : "Refresh scanner"}
             </button>
-            <span className="small">No wallet required to research.</span>
+            <span className="small">
+              Last sync {data?.fetchedAt ? new Date(data.fetchedAt).toLocaleTimeString() : "—"}
+            </span>
           </div>
         </div>
 
         <div className="heroCard metrics">
           <Metric value={String(data?.markets.length ?? 0)} label="markets scored" />
           <Metric value={usd(totalVolume)} label="visible volume" />
+          <Metric value={top?.signalScore.toFixed(0) ?? "—"} label="top research score" />
           <Metric
-            value={data?.markets[0]?.signalScore.toFixed(0) ?? "—"}
-            label="top signal score"
-          />
-          <Metric
-            value={String(
-              data?.markets.filter((market) => market.phase === "secondary").length ?? 0,
-            )}
+            value={String(data?.markets.filter((market) => market.phase === "secondary").length ?? 0)}
             label="secondary markets"
           />
         </div>
       </section>
 
+      {top && (
+        <section className="spotlight">
+          <div>
+            <div className="eyebrow">Highest-priority research</div>
+            <h2>{top.title}</h2>
+            <p className="sub">{top.attentionReason} · {daysLabel(top.daysToClose)}</p>
+          </div>
+          <div className="spotlightStats">
+            <div><span>Score</span><strong>{top.signalScore.toFixed(0)}</strong></div>
+            <div><span>YES</span><strong>{pct(top.yes)}</strong></div>
+            <div><span>Volume</span><strong>{usd(top.volume)}</strong></div>
+          </div>
+          <button className="btn primary" onClick={() => chooseMarket(top)}>
+            Research this market
+          </button>
+        </section>
+      )}
+
       {error && <div className="error">{error}</div>}
 
-      <section className="panel">
-        <div className="tableHead">
-          <div>Signal</div>
-          <div>Market</div>
-          <div>YES</div>
-          <div>NO</div>
-          <div>Volume</div>
-          <div>Phase</div>
+      <section className="scannerHeader">
+        <div>
+          <div className="eyebrow">Market scanner</div>
+          <h2>Research queue</h2>
         </div>
+        <div className="filterGrid">
+          <input
+            className="input filterInput"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search markets"
+          />
+          <select className="select" value={category} onChange={(event) => setCategory(event.target.value)}>
+            <option value="all">All categories</option>
+            {(data?.categories ?? []).map((item) => <option value={item} key={item}>{item}</option>)}
+          </select>
+          <select className="select" value={phase} onChange={(event) => setPhase(event.target.value)}>
+            <option value="all">All phases</option>
+            <option value="primary">Primary</option>
+            <option value="secondary">Secondary</option>
+          </select>
+          <select className="select" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
+            <option value="signal">Sort: research score</option>
+            <option value="volume">Sort: volume</option>
+            <option value="deadline">Sort: deadline</option>
+          </select>
+        </div>
+      </section>
 
-        {(data?.markets ?? []).map((market) => (
+      <section className="marketGrid">
+        {filtered.map((market) => (
           <button
-            className="row"
+            className={"marketCard " + (selected?.marketId === market.marketId ? "selected" : "")}
             key={market.marketId}
-            onClick={() => {
-              setSelected(market);
-              setAnalysis("");
-              setQuote(null);
-            }}
+            onClick={() => chooseMarket(market)}
           >
-            <div className="score">{market.signalScore.toFixed(0)}</div>
-            <div className="marketCell">
-              <div className="title">{market.title}</div>
-              <div className="meta">
-                {market.category ?? "general"} · disagreement{" "}
-                {market.disagreementScore.toFixed(0)} · timing{" "}
-                {market.timingScore.toFixed(0)}
+            <div className="cardTop">
+              <div className="score">{market.signalScore.toFixed(0)}</div>
+              <div className="cardTags">
+                <span className="phase">{market.phase}</span>
+                <span className="reasonTag">{market.attentionReason}</span>
               </div>
             </div>
-            <div className="price">{pct(market.yes)}</div>
-            <div className="price">{pct(market.no)}</div>
-            <div>{usd(market.volume)}</div>
-            <div>
-              <span className="phase">{market.phase}</span>
+
+            <div className="marketTitle">{market.title}</div>
+            <p className="marketDescription">
+              {market.description || "No market description provided."}
+            </p>
+
+            <div className="probabilityBar" aria-label="Market-implied probability">
+              <div style={{width: String(Math.round((market.yes ?? 0.5) * 100)) + "%"}} />
             </div>
+
+            <div className="priceRow">
+              <div><span>YES</span><strong>{pct(market.yes)}</strong></div>
+              <div><span>NO</span><strong>{pct(market.no)}</strong></div>
+              <div><span>VOL</span><strong>{usd(market.volume)}</strong></div>
+            </div>
+
+            <div className="scoreBreakdown">
+              <span>Activity {market.liquidityScore.toFixed(0)}</span>
+              <span>Uncertainty {market.disagreementScore.toFixed(0)}</span>
+              <span>Timing {market.timingScore.toFixed(0)}</span>
+            </div>
+            <div className="deadline">{daysLabel(market.daysToClose)}</div>
           </button>
         ))}
 
-        {!loading && !data?.markets.length && (
-          <div className="empty">
-            No active markets returned yet. Add PANTA_API_KEY to the deployment.
+        {!loading && !filtered.length && (
+          <div className="empty cardEmpty">
+            No markets match the current filters.
           </div>
         )}
       </section>
 
       {selected && (
-        <section className="drawer">
+        <section className="drawer" id="research">
           <div className="drawerGrid">
             <div>
-              <div className="eyebrow">Research agent</div>
+              <div className="eyebrow">AI research agent</div>
               <h2>{selected.title}</h2>
               <p className="sub">
                 {selected.description || "No description provided."}
               </p>
+
+              <div className="researchMeta">
+                <span>Research score <b>{selected.signalScore.toFixed(0)}</b></span>
+                <span>Implied YES <b>{pct(selected.yes)}</b></span>
+                <span>{daysLabel(selected.daysToClose)}</span>
+              </div>
 
               <div className="controls">
                 <button
@@ -217,23 +358,39 @@ export default function Dashboard() {
                   onClick={runResearch}
                   disabled={analysisLoading}
                 >
-                  {analysisLoading ? "Researching web…" : "Generate research brief"}
+                  {analysisLoading ? "Researching the web…" : "Generate research brief"}
                 </button>
+                {analysis && (
+                  <button className="btn" onClick={copyResearch}>Copy brief</button>
+                )}
               </div>
 
-              <div className="analysis">
+              <div className={"analysis " + (analysis ? "filled" : "")}>
                 {analysis ||
-                  "Run the research agent to collect fresh context, uncertainty and watch triggers. This is market intelligence, not a recommendation to buy or sell."}
+                  "The agent will separate facts from uncertainty, inspect catalysts and resolution mechanics, and produce watch triggers. It does not choose a trade for you."}
               </div>
+
+              {!!sources.length && (
+                <div className="sources">
+                  <div className="small sourceLabel">Sources used</div>
+                  {sources.map((source) => (
+                    <a href={source.url} target="_blank" rel="noreferrer" key={source.url}>
+                      {source.title}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="quoteBox">
-              <div className="eyebrow">Human confirmation lane</div>
+              <div className="eyebrow">Execution preview</div>
               <h3>Preview a primary-market quote</h3>
               <p className="small">
-                SignalDesk requests a quote only. Signing and broadcasting remain
-                a separate explicit wallet action.
+                SignalDesk requests a quote only. It never signs or broadcasts a
+                transaction automatically.
               </p>
+
+              <div className="safetyPill">Human confirmation required</div>
 
               <label>Solana wallet</label>
               <input
@@ -244,15 +401,15 @@ export default function Dashboard() {
               />
 
               <label>Side</label>
-              <div className="controls">
+              <div className="controls tight">
                 <button
-                  className={`btn ${side === "yes" ? "primary" : ""}`}
+                  className={"btn " + (side === "yes" ? "primary" : "")}
                   onClick={() => setSide("yes")}
                 >
                   YES
                 </button>
                 <button
-                  className={`btn ${side === "no" ? "primary" : ""}`}
+                  className={"btn " + (side === "no" ? "primary" : "")}
                   onClick={() => setSide("no")}
                 >
                   NO
@@ -286,7 +443,7 @@ export default function Dashboard() {
               {quote && (
                 <div className="quoteResult">
                   <strong>{quote.shares} shares</strong>
-                  <span>Avg price {quote.avgPrice}</span>
+                  <span>Average price {quote.avgPrice}</span>
                   <span>Fee {quote.feeUsdc} USDC</span>
                   <span>Expires {new Date(quote.expiresAt).toLocaleTimeString()}</span>
                 </div>
@@ -298,7 +455,7 @@ export default function Dashboard() {
 
       <footer className="footer">
         <b>Powered by Panta</b> · SignalDesk is an independent research interface.
-        Market prices are not guarantees or financial advice.
+        Research scores prioritize attention; they are not expected-return estimates or financial advice.
       </footer>
     </main>
   );
