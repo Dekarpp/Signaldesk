@@ -96,13 +96,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!selected) return;
+    const marketId = selected.marketId;
     const controller = new AbortController();
 
     async function loadActivity() {
       setActivityLoading(true);
       try {
         const res = await fetch(
-          "/api/market-activity?marketId=" + encodeURIComponent(selected.marketId),
+          "/api/market-activity?marketId=" + encodeURIComponent(marketId),
           {cache: "no-store", signal: controller.signal},
         );
         const json = await res.json();
