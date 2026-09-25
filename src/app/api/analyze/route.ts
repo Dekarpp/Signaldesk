@@ -48,7 +48,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const market = await req.json();
+    const body = await req.json();
+    const market = body?.market && typeof body.market === "object" ? body.market : body;
+    const mode = body?.mode === "move" ? "move" : "research";
+    const context = body?.context && typeof body.context === "object" ? body.context : {};
     const sandbox =
       String(market?.marketId ?? "").startsWith("TestMarket") ||
       String(market?.disclaimer ?? "").toLowerCase().includes("sandbox");
@@ -73,15 +76,21 @@ export async function POST(req: NextRequest) {
       !hasTextMetadata && imageUrl
         ? "Panta returned blank title/description. Inspect the attached market image and extract the exact market question only if it is clearly visible. If the image is ambiguous, say the market metadata is insufficient and do not guess."
         : "",
+      mode === "move"
+        ? "Explain what may have moved this market since the previous SignalDesk scan. Treat the observed price delta and trade-tape data as context, not proof of causation. Identify fresh public events that plausibly explain the movement, and include alternative explanations if evidence is weak."
+        : "Produce a general research brief for this market.",
       "Return concise markdown using exactly these headings:",
-      "## Market read",
-      "## Evidence",
-      "## Catalysts",
-      "## Resolution & uncertainty",
-      "## Watch triggers",
+      mode === "move" ? "## What changed" : "## Market read",
+      mode === "move" ? "## Likely drivers" : "## Evidence",
+      mode === "move" ? "## Evidence" : "## Catalysts",
+      mode === "move" ? "## Alternative explanations" : "## Resolution & uncertainty",
+      mode === "move" ? "## What to watch" : "## Watch triggers",
       "Keep the brief under 700 words.",
       "",
+      "MARKET:",
       JSON.stringify(market, null, 2),
+      mode === "move" ? "SIGNALDESK OBSERVED CONTEXT:" : "",
+      mode === "move" ? JSON.stringify(context, null, 2) : "",
     ].filter(Boolean).join("\n");
 
     const inputContent: Array<Record<string, unknown>> = [
@@ -127,6 +136,7 @@ export async function POST(req: NextRequest) {
       model: process.env.OPENAI_MODEL ?? "gpt-5.6",
       sandbox,
       usedImage: Boolean(!sandbox && imageUrl),
+      mode,
     });
   } catch (error) {
     return NextResponse.json(
