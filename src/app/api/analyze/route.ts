@@ -1,4 +1,7 @@
+import {createHash} from "crypto";
+import {unstable_cache} from "next/cache";
 import {NextRequest, NextResponse} from "next/server";
+import {checkAiRateLimit} from "@/lib/rate-limit";
 
 type Citation = {title: string; url: string};
 
@@ -133,12 +136,151 @@ function briefToText(brief: SimpleBrief) {
   return lines.filter((line, index, all) => line || all[index - 1]).join("\n").trim();
 }
 
+async function callResearchModel({
+  apiKey,
+  prompt,
+  imageUrl,
+  sandbox,
+}: {
+  apiKey: string;
+  prompt: string;
+  imageUrl: string | null;
+  sandbox: boolean;
+}) {
+  const inputContent: Array<Record<string, unknown>> = [
+    {type: "input_text", text: prompt},
+  ];
+
+  if (!sandbox && imageUrl) {
+    inputContent.push({
+      type: "input_image",
+      image_url: imageUrl,
+      detail: "auto",
+    });
+  }
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL ?? "gpt-5.6",
+      input: [{role: "user", content: inputContent}],
+      tools: sandbox ? [] : [{type: "web_search"}],
+      ...(sandbox
+        ? {}
+        : {
+            tool_choice: "required",
+            include: ["web_search_call.action.sources"],
+          }),
+      reasoning: {effort: "low"},
+      max_output_tokens: 700,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "signaldesk_simple_brief",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              title: {type: "string"},
+              bottomLine: {type: "string"},
+              keyPoints: {
+                type: "array",
+                items: {type: "string"},
+              },
+              uncertainty: {type: "string"},
+              watch: {
+                type: "array",
+                items: {type: "string"},
+              },
+              confidence: {
+                type: "string",
+                enum: ["Low", "Medium", "High"],
+              },
+            },
+            required: [
+              "title",
+              "bottomLine",
+              "keyPoints",
+              "uncertainty",
+              "watch",
+              "confidence",
+            ],
+            additionalProperties: false,
+          },
+        },
+      },
+      store: false,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message ?? "OpenAI error " + response.status);
+  }
+
+  const result = extractResponse(data);
+  const brief = parseBrief(result.text);
+
+  return {
+    brief,
+    analysis: briefToText(brief),
+    sources: result.sources,
+  };
+}
+
+function researchCacheKey(
+  market: Record<string, unknown>,
+  mode: string,
+  context: Record<string, unknown>,
+) {
+  const stable = {
+    marketId: market?.marketId ?? "",
+    title: market?.title ?? "",
+    description: market?.description ?? "",
+    phase: market?.phase ?? "",
+    yes: market?.yes ?? market?.yesPrice ?? null,
+    no: market?.no ?? market?.noPrice ?? null,
+    endTime: market?.endTime ?? null,
+    mode,
+    context:
+      mode === "move"
+        ? {
+            priceDeltaYes: context?.priceDeltaYes ?? null,
+            tradeCount:
+              context?.activity && typeof context.activity === "object"
+                ? (context.activity as Record<string, unknown>).tradeCount ?? null
+                : null,
+          }
+        : null,
+  };
+
+  return createHash("sha256")
+    .update(JSON.stringify(stable))
+    .digest("hex")
+    .slice(0, 24);
+}
+
 export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY?.replace(/\s+/g, "");
   if (!apiKey) {
     return NextResponse.json(
       {error: "OPENAI_API_KEY is not configured"},
       {status: 503},
+    );
+  }
+
+  const rate = checkAiRateLimit(req);
+  if (!rate.ok) {
+    return NextResponse.json(
+      {error: rate.reason},
+      {
+        status: 429,
+        headers: {"Retry-After": String(rate.retryAfterSec)},
+      },
     );
   }
 
@@ -188,91 +330,19 @@ export async function POST(req: NextRequest) {
       mode === "move" ? JSON.stringify(context, null, 2) : "",
     ].filter(Boolean).join("\n");
 
-    const inputContent: Array<Record<string, unknown>> = [
-      {type: "input_text", text: prompt},
-    ];
+    const cacheKey = researchCacheKey(market, mode, context);
+    const cachedResearch = unstable_cache(
+      () => callResearchModel({apiKey, prompt, imageUrl, sandbox}),
+      ["signaldesk-ai-research", cacheKey],
+      {revalidate: mode === "move" ? 300 : 1800},
+    );
 
-    if (!sandbox && imageUrl) {
-      inputContent.push({
-        type: "input_image",
-        image_url: imageUrl,
-        detail: "auto",
-      });
-    }
-
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL ?? "gpt-5.6",
-        input: [{role: "user", content: inputContent}],
-        tools: sandbox ? [] : [{type: "web_search"}],
-        ...(sandbox
-          ? {}
-          : {
-              tool_choice: "required",
-              include: ["web_search_call.action.sources"],
-            }),
-        reasoning: {effort: "low"},
-        max_output_tokens: 700,
-        text: {
-          format: {
-            type: "json_schema",
-            name: "signaldesk_simple_brief",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                title: {type: "string"},
-                bottomLine: {type: "string"},
-                keyPoints: {
-                  type: "array",
-                  items: {type: "string"},
-                },
-                uncertainty: {type: "string"},
-                watch: {
-                  type: "array",
-                  items: {type: "string"},
-                },
-                confidence: {
-                  type: "string",
-                  enum: ["Low", "Medium", "High"],
-                },
-              },
-              required: [
-                "title",
-                "bottomLine",
-                "keyPoints",
-                "uncertainty",
-                "watch",
-                "confidence",
-              ],
-              additionalProperties: false,
-            },
-          },
-        },
-        store: false,
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      return NextResponse.json(
-        {error: data?.error?.message ?? "OpenAI error " + response.status},
-        {status: 502},
-      );
-    }
-
-    const result = extractResponse(data);
-    const brief = parseBrief(result.text);
+    const research = await cachedResearch();
 
     return NextResponse.json({
-      brief,
-      analysis: briefToText(brief),
-      sources: result.sources,
+      brief: research.brief,
+      analysis: research.analysis,
+      sources: research.sources,
       model: process.env.OPENAI_MODEL ?? "gpt-5.6",
       sandbox,
       usedImage: Boolean(!sandbox && imageUrl),
