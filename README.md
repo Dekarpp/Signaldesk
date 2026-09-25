@@ -1,42 +1,172 @@
 # SignalDesk
 
-AI-powered prediction-market research and market intelligence built on the Panta API.
+**AI research and execution-prep for prediction markets, powered by Panta.**
 
-## MVP
-- Live Panta market discovery
-- Deterministic signal score
-- AI research brief with fresh web context
-- Wallet-position plumbing
+SignalDesk turns live Panta markets into a prioritized research queue. It combines deterministic market scoring, Panta trade/activity data, live web research, watchlists, wallet-position intelligence, and unsigned transaction building so a user can understand a market before taking any action.
+
+**Live demo:** https://signaldesk-henna.vercel.app
+
+> SignalDesk does not auto-trade. Research and execution are deliberately separated. Wallet signing and transaction broadcasting remain explicit user actions.
+
+## Why SignalDesk
+
+Prediction-market users often jump between a market page, news, social feeds, wallet positions, and raw trade activity. SignalDesk compresses that workflow into one research terminal:
+
+1. Scan live Panta markets.
+2. Rank markets by activity, uncertainty, and time sensitivity.
+3. Inspect recent Panta market activity.
+4. Ask an AI research agent for current evidence, catalysts, resolution risks, and watch triggers.
+5. Explain plausible drivers after a probability move.
+6. Track a personal watchlist.
+7. Inspect Panta wallet positions.
+8. Request a Panta quote and build an **unsigned** Solana transaction.
+9. Hand control back to the user's wallet for any signing/broadcasting step.
+
+## Panta integration
+
+SignalDesk uses Panta as core product infrastructure, not as a cosmetic data source.
+
+| Product feature | Panta API flow |
+| --- | --- |
+| Live market discovery | GET /markets/ |
+| Market detail enrichment | GET /markets/{marketId}/ |
+| Recent market activity | GET /markets/{marketId}/trades/ |
+| Wallet intelligence | GET /positions/?wallet=... |
+| Primary-market quote | POST /primaryorderquote/ |
+| Unsigned transaction build | POST /primaryorderbuild/ |
+
+The product displays the required **Powered by Panta** attribution alongside Panta-powered functionality.
+
+## Product features
+
+- Live Panta scanner with real market metadata
+- Deterministic research-priority score
+- Search, category, phase, volume/deadline/signal sorting
+- Market images and metadata fallbacks
+- Browser-persistent watchlist
+- Previous-scan probability deltas
+- Panta trade-tape summary: YES flow, NO flow, primary vs. secondary activity
+- AI research briefs with fresh web context and sources
+- **Why did this market move?** research mode that treats observed price/activity changes as context rather than proof of causation
+- Public-wallet Panta positions view
+- Active-position mark-to-market estimates when a current Panta price is available
 - Primary-market quote preview
-- Human-confirmed actions only
-- **Powered by Panta** attribution
+- Unsigned Solana transaction build preview
+- Human-confirmation safety boundary: no automatic signing or broadcasting
+- Responsive desktop/mobile UI
+- Integration health indicators
+
+## Architecture
+
+~~~mermaid
+flowchart LR
+    U[User] --> UI[Next.js SignalDesk UI]
+    UI --> M[/api/markets]
+    UI --> A[/api/market-activity]
+    UI --> R[/api/analyze]
+    UI --> P[/api/positions]
+    UI --> Q[/api/quote]
+    UI --> B[/api/build]
+
+    M --> PA[Panta API]
+    A --> PA
+    P --> PA
+    Q --> PA
+    B --> PA
+
+    R --> OA[OpenAI Responses API]
+    OA --> W[Web Search]
+
+    B --> X[Unsigned Solana instructions]
+    X --> H[Human-controlled wallet signing]
+~~~
+
+Panta and OpenAI credentials remain server-side. SignalDesk never requests or stores seed phrases or private keys.
+
+## Research score
+
+The score is an **attention-priority heuristic**, not an expected-return model.
+
+It currently combines:
+
+- market activity / visible volume
+- probability uncertainty
+- time to close
+- market phase
+
+The UI exposes the score breakdown so the user can see why a market was prioritized.
+
+## Business model
+
+SignalDesk is designed as a research layer that can sit above prediction-market infrastructure.
+
+Potential monetization:
+
+- **Pro research subscription** — advanced watchlists, historical probability timelines, saved research, alerts
+- **Creator / media workspace** — embeddable market intelligence, audience-facing briefs, market monitoring
+- **API / B2B intelligence** — ranked Panta market signals and research summaries for trading terminals, communities, or publishers
+- **Partner attribution / ecosystem distribution** — route qualified users into Panta-powered actions without taking custody of funds
+
+The near-term goal is to prove repeat usage around market monitoring and research, then add persistent alerts/history before charging.
+
+## Security
+
+- Secrets are never committed to the repository.
+- Panta/OpenAI secrets are used server-side only.
+- Public wallet addresses can be queried for positions; private keys are never requested.
+- Transaction building stops at unsigned instructions.
+- Signing/broadcasting must happen in a user-controlled wallet.
+- Developer onboarding helpers are disabled by default and require SIGNALDESK_SETUP_ENABLED=true.
+- The product does not claim prediction-market prices are guaranteed forecasts or provide automatic trading advice.
+
+See [SECURITY.md](./SECURITY.md).
 
 ## Local setup
 
-```bash
+~~~bash
 cp .env.example .env.local
 npm install
 npm run dev
-```
+~~~
 
-```env
+~~~env
 PANTA_API_BASE_URL=https://live-api.panta.market/api/v1
-PANTA_API_KEY=pk_test_...
-OPENAI_API_KEY=...
+PANTA_API_KEY=pk_test_replace_me
+OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.6
-```
+SIGNALDESK_SETUP_ENABLED=false
+~~~
 
-SignalDesk does not auto-trade. Research and execution remain separate, and any signing/broadcasting step must require explicit wallet confirmation.
+Then open http://localhost:3000.
 
+## Deployment
 
-Deployment is managed by Vercel Git integration.
+Production is deployed through Vercel Git integration from main.
 
-Environment variables are configured in Vercel.
+- Production: https://signaldesk-henna.vercel.app
+- CI: GitHub Actions runs install + production build
+- Vercel: production deployment is created automatically from main
 
-Redeploy after Panta key rotation.
+## Hackathon
 
-Redeploy after OpenAI key rotation.
+SignalDesk is being prepared for:
 
-Redeploy after switching Panta to live key.
+- **Colosseum Crypto World's Fair**
+- **Panta API Sidetrack on Superteam Earn**
 
-Redeploy after switching Panta to live key.
+The submission materials, copy, demo flow, business case, and final checklist are in [SUBMISSION.md](./SUBMISSION.md).
+
+## Roadmap
+
+1. Persistent probability history and research snapshots
+2. Alerting for watched-market moves and resolution-risk changes
+3. Client-side Solana wallet signing for explicitly confirmed transactions
+4. Saved research workspaces
+5. Multi-market portfolio intelligence
+6. Team / creator collaboration features
+
+## Attribution
+
+[**Powered by Panta**](https://panta.market)
+
+SignalDesk is an independent developer product built with the Panta API.
