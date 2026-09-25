@@ -48,6 +48,20 @@ const usd = (n: number) =>
 const pct = (n: number | null) =>
   n == null ? "—" : Math.round(n * 100) + "%";
 
+const marketLabel = (market: SignalMarket) => {
+  const title = market.title?.trim();
+  if (title) return title;
+  const category = (market.category ?? "market").replace(/\b\w/g, (c) => c.toUpperCase());
+  return category + " market · " + market.marketId.slice(0, 7) + "…" + market.marketId.slice(-5);
+};
+
+const marketDescription = (market: SignalMarket) => {
+  const description = market.description?.trim();
+  if (description) return description;
+  if (market.oracle) return "Panta metadata is incomplete. Oracle: " + market.oracle;
+  return "Panta metadata is incomplete. Open the market to inspect image and on-chain context.";
+};
+
 const daysLabel = (days: number | null) => {
   if (days == null) return "No deadline";
   if (days < 0) return "Closed";
@@ -320,7 +334,7 @@ export default function Dashboard() {
         <section className="spotlight">
           <div>
             <div className="eyebrow">Highest-priority research</div>
-            <h2>{top.title}</h2>
+            <h2>{marketLabel(top)}</h2>
             <p className="sub">{top.attentionReason} · {daysLabel(top.daysToClose)}</p>
           </div>
           <div className="spotlightStats">
@@ -380,10 +394,19 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="marketTitle">{market.title}</div>
+            <div className="marketTitle">{marketLabel(market)}</div>
             <p className="marketDescription">
-              {market.description || "No market description provided."}
+              {marketDescription(market)}
             </p>
+
+            {market.images?.[0] && (
+              <div className="marketImage">
+                <img src={market.images[0]} alt="" loading="lazy" />
+                {!market.title?.trim() && (
+                  <span>Question available in Panta image</span>
+                )}
+              </div>
+            )}
 
             <div className="probabilityBar" aria-label="Market-implied probability">
               <div style={{width: String(Math.round((market.yes ?? 0.5) * 100)) + "%"}} />
@@ -423,10 +446,21 @@ export default function Dashboard() {
           <div className="drawerGrid">
             <div>
               <div className="eyebrow">AI research agent</div>
-              <h2>{selected.title}</h2>
+              <h2>{marketLabel(selected)}</h2>
               <p className="sub">
-                {selected.description || "No description provided."}
+                {marketDescription(selected)}
               </p>
+
+              {selected.images?.[0] && (
+                <div className="researchImage">
+                  <img src={selected.images[0]} alt="" />
+                  {!selected.title?.trim() && (
+                    <div className="small">
+                      Panta returned blank text metadata. The research agent can inspect this market image before searching the web.
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="researchMeta">
                 <span>Research score <b>{selected.signalScore.toFixed(0)}</b></span>
