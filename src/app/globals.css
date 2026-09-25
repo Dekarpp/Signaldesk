@@ -711,3 +711,43 @@ h3 { letter-spacing: -.02em; }
 @media (max-width: 520px) {
   .activityStrip { grid-template-columns: 1fr 1fr; }
 }
+
+
+.integrationBadge {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.integrationBadge.ready {
+  color: var(--accent);
+  border-color: #2c4426;
+  background: #101810;
+}
+
+.integrationBadge.offline {
+  color: #ffcb87;
+  border-color: #5d4726;
+  background: #1b150b;
+}
+
+.deadlineRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  color: #cad3df;
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+.deltaUp { color: #b9ff66; }
+.deltaDown { color: #ff9c9c; }
+
+@media (max-width: 760px) {
+  .integrationBadge { display: none; }
+  .deadlineRow { align-items: flex-start; flex-direction: column; }
+}
