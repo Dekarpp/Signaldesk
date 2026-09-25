@@ -30,3 +30,5 @@ SignalDesk does not auto-trade. Research and execution remain separate, and any 
 
 
 Deployment is managed by Vercel Git integration.
+
+Environment variables are configured in Vercel.
