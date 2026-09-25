@@ -34,12 +34,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const secret = String(data.secret ?? "").replace(/\s+/g, "");
+    let verified = false;
+    let verifyError: string | null = null;
+
+    if (secret) {
+      const verify = await fetch(`${BASE}/account/`, {
+        headers: {"X-Api-Key": secret},
+        cache: "no-store",
+      });
+      verified = verify.ok;
+      if (!verify.ok) {
+        const verifyBody = await verify.json().catch(() => ({}));
+        verifyError = verifyBody?.message ?? verifyBody?.detail ?? verifyBody?.code ?? `Panta returned ${verify.status}`;
+      }
+    }
+
     return NextResponse.json({
       id: data.id,
       name: data.name,
       prefix: data.prefix,
       env: data.env,
-      secret: data.secret,
+      secret,
+      verified,
+      verifyError,
       createdAt: data.createdAt,
     }, {status: 201});
   } catch (error) {
