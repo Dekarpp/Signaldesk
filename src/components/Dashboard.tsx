@@ -735,7 +735,7 @@ export default function Dashboard() {
 
               <div className={"analysis simpleAnalysis " + (brief ? "filled" : "")}>
                 {brief ? (
-                  <SimpleResearchBrief brief={brief} />
+                  <SimpleResearchBrief brief={brief} marketYes={selected.yes} />
                 ) : (
                   <div className="researchEmpty">
                     <strong>Get the simple version.</strong>
@@ -1201,10 +1201,16 @@ function PriceSparkline({points}: {points: PricePoint[]}) {
   );
 }
 
-function SimpleResearchBrief({brief}: {brief: SimpleBrief}) {
+function SimpleResearchBrief({
+  brief,
+  marketYes,
+}: {
+  brief: SimpleBrief;
+  marketYes: number | null;
+}) {
   return (
     <div className="simpleBrief">
-      <DecisionLensCard decision={brief.decision} />
+      <DecisionLensCard decision={brief.decision} marketYes={marketYes} />
 
       <div className="briefHero compactBriefHero">
         <div>
@@ -1261,7 +1267,13 @@ function SimpleResearchBrief({brief}: {brief: SimpleBrief}) {
   );
 }
 
-function DecisionLensCard({decision}: {decision: DecisionLens}) {
+function DecisionLensCard({
+  decision,
+  marketYes,
+}: {
+  decision: DecisionLens;
+  marketYes: number | null;
+}) {
   const label =
     decision.signal === "leans_yes"
       ? "Evidence leans YES"
@@ -1296,7 +1308,17 @@ function DecisionLensCard({decision}: {decision: DecisionLens}) {
 
       {decision.signal !== "not_assessed" && (
         <div className="evidenceScale" aria-label={label}>
+          <div className="comparisonLegend">
+            <span><i className="marketDot" /> Market {marketYes == null ? "—" : Math.round(marketYes * 100) + "% YES"}</span>
+            <span><i className="evidenceDot" /> Evidence</span>
+          </div>
           <div className="evidenceScaleTrack">
+            {marketYes != null && (
+              <span
+                className="marketMarker"
+                style={{left: Math.max(2, Math.min(98, marketYes * 100)) + "%"}}
+              />
+            )}
             <span className="evidenceMarker" style={{left: position + "%"}} />
           </div>
           <div className="evidenceScaleLabels">
