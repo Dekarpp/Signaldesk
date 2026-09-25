@@ -1,6 +1,6 @@
 # SignalDesk — Project Status
 
-_Last updated: 2026-09-25 14:52 UTC_
+_Last updated: 2026-09-25 15:47 UTC_
 
 This file is the handoff/source-of-truth for continuing SignalDesk if chat context is lost.
 
@@ -24,8 +24,8 @@ Primary external goal: prepare a strong Panta API hackathon/sidetrack submission
 - Vercel project: `signaldesk`
 - Production: https://signaldesk-henna.vercel.app
 - Alternate production alias: https://signaldesk-dekarp8-1008.vercel.app
-- Snapshot before this status file: `d52e048e4f3f31a0b2d627fcce07851c9357df4d`
-- Snapshot commit message: `style: add live Panta market imagery`
+- Current production snapshot: `1cb93f4c0d354e3c2c8b43a6651d533cf3105a13`
+- Current snapshot message: `style: polish watchlist controls`
 
 GitHub Actions CI runs `npm install` and `npm run build` on pushes / PRs.
 Vercel is connected to GitHub and auto-deploys `main`.
@@ -39,8 +39,12 @@ Verified against production on 2026-09-25:
 - OpenAI configured: yes
 - OpenAI auth: 200 / valid
 - `GET /api/markets` -> 200
+- `GET /api/market-activity` -> 200 in production runtime logs
+- `POST /api/analyze` -> 200 in production runtime logs
 - Panta mode: `live`
 - Sandbox: `false`
+- Latest Vercel production deployment -> `READY`
+- Latest build -> Next.js compile + TypeScript succeeded
 
 The live Panta catalog currently returns real markets. At the verification snapshot, categories included:
 - gaming
@@ -104,6 +108,8 @@ The score is an attention/research priority, not an expected-return estimate.
 - top-priority spotlight
 - local price-delta memory between refreshes
 - integration health indicators
+- browser-local watchlist with watchlist-only filtering
+- watchlist state persists in `localStorage`
 
 ### AI research
 Endpoint: `POST /api/analyze`
@@ -181,6 +187,7 @@ Do not expose this page as a public onboarding feature without adding proper acc
 
 1. Panta metadata quality is inconsistent.
    - Some markets have blank title/description.
+   - Search now tolerates missing text fields without crashing.
    - Some prices are absent on catalog rows.
    - Detail/on-chain/oracle/image fields may need fallback logic.
 
@@ -210,13 +217,12 @@ Do not expose this page as a public onboarding feature without adding proper acc
 ## Next Priorities
 
 ### P0 — prove the live demo
-- Run AI research end-to-end on a real named live Panta market.
-- Verify source rendering and response quality.
-- Verify market activity endpoint on live markets.
-- Fix any live-data edge cases discovered.
+- AI research endpoint has returned HTTP 200 in production; visually verify brief quality and source rendering on a named live market.
+- Market activity endpoint has returned HTTP 200 in production.
+- Continue fixing live-data edge cases discovered during demos.
 
 ### P1 — make the product compelling for judges
-- Add watchlist.
+- Upgrade the browser-local watchlist to server persistence if time permits.
 - Add persistent market snapshots/history.
 - Show meaningful probability change over time.
 - Add “why this market moved” research refresh.
