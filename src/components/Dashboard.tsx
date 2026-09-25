@@ -31,6 +31,13 @@ type Quote = {
   expiresAt: string;
 };
 
+type HealthResponse = {
+  pantaConfigured: boolean;
+  openaiConfigured: boolean;
+  openaiAuthOk: boolean;
+  openaiStatus?: number | null;
+};
+
 const usd = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -64,6 +71,8 @@ export default function Dashboard() {
   const [amount, setAmount] = useState("20");
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState("");
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [priceDeltas, setPriceDeltas] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [phase, setPhase] = useState("all");
@@ -77,6 +86,25 @@ export default function Dashboard() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Unable to load markets");
       setData(json);
+
+      if (typeof window !== "undefined" && Array.isArray(json.markets)) {
+        const previousRaw = window.localStorage.getItem("signaldesk:last-prices");
+        const previous = previousRaw ? JSON.parse(previousRaw) as Record<string, number> : {};
+        const next: Record<string, number> = {};
+        const deltas: Record<string, number> = {};
+
+        for (const market of json.markets as SignalMarket[]) {
+          if (market.yes == null) continue;
+          next[market.marketId] = market.yes;
+          if (typeof previous[market.marketId] === "number") {
+            deltas[market.marketId] = market.yes - previous[market.marketId];
+          }
+        }
+
+        setPriceDeltas(deltas);
+        window.localStorage.setItem("signaldesk:last-prices", JSON.stringify(next));
+      }
+
       if (json.markets?.length) {
         setSelected((current) => {
           if (!current) return json.markets[0];
@@ -92,6 +120,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     void refresh();
+
+    void fetch("/api/health", {cache: "no-store"})
+      .then((response) => response.json())
+      .then((json: HealthResponse) => setHealth(json))
+      .catch(() => setHealth(null));
   }, []);
 
   useEffect(() => {
@@ -235,6 +268,9 @@ export default function Dashboard() {
           <span className={"modeBadge " + (data?.sandbox ? "sandbox" : "live")}>
             {data?.sandbox ? "SANDBOX" : "LIVE"}
           </span>
+          <span className={"integrationBadge " + (health?.openaiAuthOk ? "ready" : "offline")}>
+            AI {health?.openaiAuthOk ? "READY" : "CHECK"}
+          </span>
         </div>
       </header>
 
@@ -364,7 +400,14 @@ export default function Dashboard() {
               <span>Uncertainty {market.disagreementScore.toFixed(0)}</span>
               <span>Timing {market.timingScore.toFixed(0)}</span>
             </div>
-            <div className="deadline">{daysLabel(market.daysToClose)}</div>
+            <div className="deadlineRow">
+              <span>{daysLabel(market.daysToClose)}</span>
+              {typeof priceDeltas[market.marketId] === "number" && Math.abs(priceDeltas[market.marketId]) >= 0.0001 && (
+                <span className={priceDeltas[market.marketId] > 0 ? "deltaUp" : "deltaDown"}>
+                  YES {priceDeltas[market.marketId] > 0 ? "+" : ""}{(priceDeltas[market.marketId] * 100).toFixed(1)} pts since last scan
+                </span>
+              )}
+            </div>
           </button>
         ))}
 
