@@ -10,6 +10,7 @@ export default function SetupPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [access, setAccess] = useState("");
+  const [keyEnv, setKeyEnv] = useState<"test" | "live">("test");
   const [key, setKey] = useState("");
   const [verified, setVerified] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
@@ -58,7 +59,7 @@ export default function SetupPage() {
       const response = await fetch("/api/panta-create-key", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({access, name: "signaldesk"}),
+        body: JSON.stringify({access, name: "signaldesk", env: keyEnv}),
       });
       const data: KeyResult = await response.json();
       if (!response.ok || !data.secret) {
@@ -69,7 +70,7 @@ export default function SetupPage() {
       setVerified(Boolean(data.verified));
 
       if (data.verified) {
-        setMessage("API key created and verified against Panta. Copy this key into Vercel.");
+        setMessage((keyEnv === "live" ? "Live" : "Test") + " API key created and verified against Panta. Copy this key into Vercel.");
       } else {
         setError(`Panta created the key, but immediately rejected it: ${data.verifyError ?? "authentication required or invalid"}`);
       }
@@ -153,10 +154,16 @@ export default function SetupPage() {
 
       <section className="setupCard">
         <div className="eyebrow">Step 2</div>
-        <h2>Create and verify a fresh Panta test key</h2>
+        <h2>Create and verify a Panta API key</h2>
         <p className="sub">
-          SignalDesk now checks the key against Panta immediately after creation, so we know it works before putting it into Vercel.
+          SignalDesk checks the key against Panta immediately after creation. Test mode returns sandbox fixtures; live mode lets the scanner read the real catalog. SignalDesk still does not automatically sign or broadcast transactions.
         </p>
+
+        <label>Environment</label>
+        <select className="select" value={keyEnv} onChange={(e) => setKeyEnv(e.target.value as "test" | "live")}>
+          <option value="test">Test · sandbox fixtures</option>
+          <option value="live">Live · real Panta catalog</option>
+        </select>
 
         <div className="controls">
           <button
@@ -164,7 +171,7 @@ export default function SetupPage() {
             onClick={createKey}
             disabled={busy || !access}
           >
-            {busy ? "Working…" : "Create & verify test API key"}
+            {busy ? "Working…" : "Create & verify " + keyEnv + " API key"}
           </button>
         </div>
 
