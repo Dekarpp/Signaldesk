@@ -87,6 +87,8 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [priceDeltas, setPriceDeltas] = useState<Record<string, number>>({});
+  const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [watchlistOnly, setWatchlistOnly] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [phase, setPhase] = useState("all");
@@ -133,6 +135,19 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = JSON.parse(
+          window.localStorage.getItem("signaldesk:watchlist") ?? "[]",
+        );
+        if (Array.isArray(saved)) {
+          setWatchlist(saved.filter((item): item is string => typeof item === "string"));
+        }
+      } catch {
+        setWatchlist([]);
+      }
+    }
+
     void refresh();
 
     void fetch("/api/health", {cache: "no-store"})
@@ -172,12 +187,13 @@ export default function Dashboard() {
       const search = query.trim().toLowerCase();
       const matchesSearch =
         !search ||
-        market.title.toLowerCase().includes(search) ||
-        market.description?.toLowerCase().includes(search) ||
-        market.category?.toLowerCase().includes(search);
+        String(market.title ?? "").toLowerCase().includes(search) ||
+        String(market.description ?? "").toLowerCase().includes(search) ||
+        String(market.category ?? "").toLowerCase().includes(search);
       const matchesCategory = category === "all" || market.category === category;
       const matchesPhase = phase === "all" || market.phase === phase;
-      return matchesSearch && matchesCategory && matchesPhase;
+      const matchesWatchlist = !watchlistOnly || watchlist.includes(market.marketId);
+      return matchesSearch && matchesCategory && matchesPhase && matchesWatchlist;
     });
 
     items.sort((a, b) => {
@@ -190,7 +206,7 @@ export default function Dashboard() {
     });
 
     return items;
-  }, [data, query, category, phase, sort]);
+  }, [data, query, category, phase, sort, watchlist, watchlistOnly]);
 
   const totalVolume = useMemo(
     () => data?.markets.reduce((sum, market) => sum + market.volume, 0) ?? 0,
@@ -210,6 +226,20 @@ export default function Dashboard() {
         behavior: "smooth",
         block: "start",
       });
+    });
+  }
+
+  function toggleWatchlist(marketId: string) {
+    setWatchlist((current) => {
+      const next = current.includes(marketId)
+        ? current.filter((id) => id !== marketId)
+        : [...current, marketId];
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("signaldesk:watchlist", JSON.stringify(next));
+      }
+
+      return next;
     });
   }
 
@@ -351,9 +381,18 @@ export default function Dashboard() {
       {error && <div className="error">{error}</div>}
 
       <section className="scannerHeader">
-        <div>
-          <div className="eyebrow">Market scanner</div>
-          <h2>Research queue</h2>
+        <div className="scannerTitle">
+          <div>
+            <div className="eyebrow">Market scanner</div>
+            <h2>Research queue</h2>
+          </div>
+          <button
+            className={"btn watchlistToggle " + (watchlistOnly ? "watching" : "")}
+            onClick={() => setWatchlistOnly((value) => !value)}
+            aria-pressed={watchlistOnly}
+          >
+            ★ Watchlist · {watchlist.length}
+          </button>
         </div>
         <div className="filterGrid">
           <input
@@ -389,6 +428,9 @@ export default function Dashboard() {
             <div className="cardTop">
               <div className="score">{market.signalScore.toFixed(0)}</div>
               <div className="cardTags">
+                {watchlist.includes(market.marketId) && (
+                  <span className="watchFlag">★ saved</span>
+                )}
                 <span className="phase">{market.phase}</span>
                 <span className="reasonTag">{market.attentionReason}</span>
               </div>
@@ -436,7 +478,9 @@ export default function Dashboard() {
 
         {!loading && !filtered.length && (
           <div className="empty cardEmpty">
-            No markets match the current filters.
+            {watchlistOnly
+              ? "No watched markets are in the current live scan."
+              : "No markets match the current filters."}
           </div>
         )}
       </section>
@@ -488,6 +532,12 @@ export default function Dashboard() {
                   disabled={analysisLoading}
                 >
                   {analysisLoading ? "Researching the web…" : "Generate research brief"}
+                </button>
+                <button
+                  className={"btn " + (watchlist.includes(selected.marketId) ? "watching" : "")}
+                  onClick={() => toggleWatchlist(selected.marketId)}
+                >
+                  {watchlist.includes(selected.marketId) ? "★ Watching" : "☆ Add to watchlist"}
                 </button>
                 {analysis && (
                   <button className="btn" onClick={copyResearch}>Copy brief</button>
