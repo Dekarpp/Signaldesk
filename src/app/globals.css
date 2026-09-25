@@ -2134,3 +2134,50 @@ h1 {
     font-size: 20px;
   }
 }
+
+
+.comparisonLegend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 9px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.comparisonLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comparisonLegend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.marketDot {
+  background: #8b98a8;
+}
+
+.evidenceDot {
+  background: var(--accent);
+}
+
+.marketMarker {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #8b98a8;
+  border: 2px solid #d5dbe3;
+  z-index: 1;
+}
+
+.evidenceMarker {
+  z-index: 2;
+}
