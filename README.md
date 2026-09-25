@@ -34,3 +34,5 @@ Deployment is managed by Vercel Git integration.
 Environment variables are configured in Vercel.
 
 Redeploy after Panta key rotation.
+
+Redeploy after OpenAI key rotation.
