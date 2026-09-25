@@ -128,6 +128,14 @@ const marketDescription = (market: SignalMarket) => {
   return "Panta did not send a text question for this market.";
 };
 
+const marketResearchReady = (market: SignalMarket) =>
+  Boolean(market.title?.trim()) ||
+  Boolean(market.description?.trim()) ||
+  Boolean(market.images?.[0]);
+
+const politicalMarket = (market: SignalMarket) =>
+  String(market.category ?? "").toLowerCase().includes("politic");
+
 const daysLabel = (days: number | null) => {
   if (days == null) return "No deadline";
   if (days < 0) return "Closed";
@@ -220,9 +228,23 @@ export default function Dashboard() {
       }
 
       if (json.markets?.length) {
+        const preferred =
+          (json.markets as SignalMarket[]).find(
+            (market) =>
+              (market.daysToClose ?? -1) >= 0 &&
+              marketResearchReady(market) &&
+              !politicalMarket(market),
+          ) ??
+          (json.markets as SignalMarket[]).find(
+            (market) =>
+              (market.daysToClose ?? -1) >= 0 &&
+              marketResearchReady(market),
+          ) ??
+          json.markets[0];
+
         setSelected((current) => {
-          if (!current) return json.markets[0];
-          return json.markets.find((m: SignalMarket) => m.marketId === current.marketId) ?? json.markets[0];
+          if (!current) return preferred;
+          return json.markets.find((m: SignalMarket) => m.marketId === current.marketId) ?? preferred;
         });
       }
     } catch (err) {
@@ -302,6 +324,15 @@ export default function Dashboard() {
         return (a.daysToClose ?? Number.MAX_SAFE_INTEGER) -
           (b.daysToClose ?? Number.MAX_SAFE_INTEGER);
       }
+
+      const researchReadyDelta =
+        Number(marketResearchReady(b)) - Number(marketResearchReady(a));
+      if (researchReadyDelta !== 0) return researchReadyDelta;
+
+      const nonPoliticalDelta =
+        Number(!politicalMarket(b)) - Number(!politicalMarket(a));
+      if (nonPoliticalDelta !== 0) return nonPoliticalDelta;
+
       return b.signalScore - a.signalScore;
     });
 
@@ -513,10 +544,7 @@ export default function Dashboard() {
     selected.yes != null &&
     selected.no != null;
 
-  const researchAvailable =
-    Boolean(selected?.title?.trim()) ||
-    Boolean(selected?.description?.trim()) ||
-    Boolean(selected?.images?.[0]);
+  const researchAvailable = selected ? marketResearchReady(selected) : false;
 
   const moveAvailable =
     Boolean(selected) &&
@@ -630,7 +658,7 @@ export default function Dashboard() {
             <option value="secondary">Secondary</option>
           </select>
           <select className="select" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
-            <option value="signal">Sort: priority</option>
+            <option value="signal">Sort: useful now</option>
             <option value="volume">Sort: volume</option>
             <option value="deadline">Sort: deadline</option>
           </select>
