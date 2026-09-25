@@ -344,7 +344,13 @@ export default function Dashboard() {
     [data],
   );
 
-  const top = filtered[0] ?? data?.markets[0] ?? null;
+  const currentMarketCount =
+    data?.markets.filter((market) => (market.daysToClose ?? -1) >= 0).length ?? 0;
+
+  const highestPriority =
+    data?.markets.length
+      ? Math.max(...data.markets.map((market) => market.signalScore))
+      : null;
 
   function chooseMarket(market: SignalMarket) {
     setSelected(market);
@@ -606,13 +612,10 @@ export default function Dashboard() {
         </div>
 
         <div className="heroCard metrics">
-          <Metric value={String(data?.markets.length ?? 0)} label="markets" />
+          <Metric value={String(currentMarketCount)} label="current" />
+          <Metric value={String(data?.markets.length ?? 0)} label="catalog" />
           <Metric value={usd(totalVolume)} label="money traded" />
-          <Metric value={top?.signalScore.toFixed(0) ?? "—"} label="top priority" />
-          <Metric
-            value={String(data?.markets.filter((market) => (market.daysToClose ?? -1) >= 0).length ?? 0)}
-            label="current markets"
-          />
+          <Metric value={highestPriority == null ? "—" : highestPriority.toFixed(0)} label="highest priority" />
         </div>
       </section>
 
