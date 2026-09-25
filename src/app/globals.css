@@ -654,3 +654,60 @@ h3 { letter-spacing: -.02em; }
   .metric strong { font-size: 22px; }
   .sandboxBanner { align-items: flex-start; flex-direction: column; }
 }
+
+
+.activityStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.activityStrip > div {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.015);
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.activityStrip span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.activityStrip strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.brief h3 {
+  margin: 15px 0 7px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.brief h3:first-child { margin-top: 0; }
+.brief p { margin: 6px 0; }
+
+.briefBullet {
+  position: relative;
+  padding-left: 14px;
+  margin: 5px 0;
+}
+
+.briefBullet::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.briefSpace { height: 5px; }
+
+@media (max-width: 520px) {
+  .activityStrip { grid-template-columns: 1fr 1fr; }
+}
