@@ -2,6 +2,15 @@ import {NextRequest, NextResponse} from "next/server";
 
 type Citation = {title: string; url: string};
 
+type SimpleBrief = {
+  title: string;
+  bottomLine: string;
+  keyPoints: string[];
+  uncertainty: string;
+  watch: string[];
+  confidence: "Low" | "Medium" | "High";
+};
+
 function extractResponse(data: any): {text: string; sources: Citation[]} {
   const output = Array.isArray(data?.output) ? data.output : [];
   const textParts: string[] = [];
@@ -34,8 +43,60 @@ function extractResponse(data: any): {text: string; sources: Citation[]} {
     text:
       textParts.join("\n").trim() ||
       (typeof data?.output_text === "string" ? data.output_text : ""),
-    sources: [...sources.values()].slice(0, 8),
+    sources: [...sources.values()].slice(0, 6),
   };
+}
+
+function fallbackBrief(text: string): SimpleBrief {
+  const clean = text.replace(/[#*_]/g, "").replace(/\s+/g, " ").trim();
+  return {
+    title: "Quick read",
+    bottomLine: clean.slice(0, 240) || "No clear conclusion yet.",
+    keyPoints: [],
+    uncertainty: "The available evidence may be incomplete.",
+    watch: [],
+    confidence: "Low",
+  };
+}
+
+function parseBrief(text: string): SimpleBrief {
+  try {
+    const parsed = JSON.parse(text);
+    return {
+      title: String(parsed?.title ?? "Quick read").slice(0, 90),
+      bottomLine: String(parsed?.bottomLine ?? "").slice(0, 320),
+      keyPoints: Array.isArray(parsed?.keyPoints)
+        ? parsed.keyPoints.map(String).filter(Boolean).slice(0, 4)
+        : [],
+      uncertainty: String(parsed?.uncertainty ?? "").slice(0, 260),
+      watch: Array.isArray(parsed?.watch)
+        ? parsed.watch.map(String).filter(Boolean).slice(0, 3)
+        : [],
+      confidence:
+        parsed?.confidence === "High" || parsed?.confidence === "Medium"
+          ? parsed.confidence
+          : "Low",
+    };
+  } catch {
+    return fallbackBrief(text);
+  }
+}
+
+function briefToText(brief: SimpleBrief) {
+  const lines = [
+    brief.title,
+    "",
+    brief.bottomLine,
+    "",
+    ...brief.keyPoints.map((point) => "• " + point),
+    "",
+    "Uncertainty: " + brief.uncertainty,
+    "",
+    ...brief.watch.map((item) => "Watch: " + item),
+    "",
+    "Confidence: " + brief.confidence,
+  ];
+  return lines.filter((line, index, all) => line || all[index - 1]).join("\n").trim();
 }
 
 export async function POST(req: NextRequest) {
@@ -66,26 +127,24 @@ export async function POST(req: NextRequest) {
 
     const prompt = [
       "You are the research layer of SignalDesk, a prediction-market intelligence product.",
-      "Use fresh public web information where the market refers to a real-world event.",
+      "Explain the market so clearly that a smart 8-year-old could follow the structure.",
+      "Use short sentences and everyday words. Avoid jargon unless it is necessary.",
       "Do not recommend a trade, do not promise returns, and do not invent facts.",
-      "Separate verified facts, market-implied probability, uncertainty, and resolution mechanics.",
-      "Stay neutral on political topics and do not tell the user how to vote or what political outcome to support.",
+      "Separate verified facts from uncertainty. Market prices are context, not proof.",
+      "Stay neutral on political topics and never tell the user how to vote or which political outcome to support.",
       sandbox
-        ? "This is a Panta sandbox fixture. Explicitly say there is no real-world market to research and use it only to demonstrate the workflow."
-        : "Treat the market question as live and time-sensitive.",
+        ? "This is a Panta sandbox fixture. Say clearly that it is a demo market."
+        : "Use fresh public web information where the market refers to a real-world event.",
       !hasTextMetadata && imageUrl
-        ? "Panta returned blank title/description. Inspect the attached market image and extract the exact market question only if it is clearly visible. If the image is ambiguous, say the market metadata is insufficient and do not guess."
+        ? "Panta returned blank text metadata. Inspect the attached market image only if the question is clearly readable. Otherwise say the market metadata is incomplete."
         : "",
       mode === "move"
-        ? "Explain what may have moved this market since the previous SignalDesk scan. Treat the observed price delta and trade-tape data as context, not proof of causation. Identify fresh public events that plausibly explain the movement, and include alternative explanations if evidence is weak."
-        : "Produce a general research brief for this market.",
-      "Return concise markdown using exactly these headings:",
-      mode === "move" ? "## What changed" : "## Market read",
-      mode === "move" ? "## Likely drivers" : "## Evidence",
-      mode === "move" ? "## Evidence" : "## Catalysts",
-      mode === "move" ? "## Alternative explanations" : "## Resolution & uncertainty",
-      mode === "move" ? "## What to watch" : "## Watch triggers",
-      "Keep the brief under 700 words.",
+        ? "Focus on what changed, the strongest plausible drivers, alternative explanations, and what would confirm or weaken those explanations."
+        : "Focus on the simple bottom line, the strongest facts, the biggest uncertainty, and what to watch next.",
+      "Keep bottomLine to no more than 2 short sentences.",
+      "Return 2 to 4 keyPoints. Each must be one short sentence.",
+      "Return no more than 3 watch items. Each must be one short sentence.",
+      "Do not include URLs in any text field. Sources are displayed separately by the product.",
       "",
       "MARKET:",
       JSON.stringify(market, null, 2),
@@ -116,7 +175,43 @@ export async function POST(req: NextRequest) {
         input: [{role: "user", content: inputContent}],
         tools: sandbox ? [] : [{type: "web_search"}],
         reasoning: {effort: "low"},
-        max_output_tokens: 1400,
+        max_output_tokens: 700,
+        text: {
+          format: {
+            type: "json_schema",
+            name: "signaldesk_simple_brief",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                title: {type: "string"},
+                bottomLine: {type: "string"},
+                keyPoints: {
+                  type: "array",
+                  items: {type: "string"},
+                },
+                uncertainty: {type: "string"},
+                watch: {
+                  type: "array",
+                  items: {type: "string"},
+                },
+                confidence: {
+                  type: "string",
+                  enum: ["Low", "Medium", "High"],
+                },
+              },
+              required: [
+                "title",
+                "bottomLine",
+                "keyPoints",
+                "uncertainty",
+                "watch",
+                "confidence",
+              ],
+              additionalProperties: false,
+            },
+          },
+        },
         store: false,
       }),
     });
@@ -130,8 +225,11 @@ export async function POST(req: NextRequest) {
     }
 
     const result = extractResponse(data);
+    const brief = parseBrief(result.text);
+
     return NextResponse.json({
-      analysis: result.text || "No analysis returned.",
+      brief,
+      analysis: briefToText(brief),
       sources: result.sources,
       model: process.env.OPENAI_MODEL ?? "gpt-5.6",
       sandbox,
