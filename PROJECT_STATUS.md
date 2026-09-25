@@ -311,3 +311,16 @@ SignalDesk MVP is ready for a serious submission when:
 - CI and production deploy are green
 - README/demo/submission package are complete
 - public repository and demo video are attached to the final submissions
+
+## 2026-09-25 production smoke test
+
+Verified against the public production deployment:
+- health: PASS (Panta configured, OpenAI configured/authenticated)
+- live market discovery: PASS
+- market activity: PASS
+- public-wallet positions endpoint: PASS
+- AI research: PASS
+- developer setup route: PASS (404 by design)
+- primary quote against every currently visible Panta `primary` market: Panta returned `MARKET_NOT_FOUND`
+
+The quote failure is upstream/data-compatibility specific: Panta's catalog currently marks markets as primary while its live order endpoint does not accept those market IDs. SignalDesk now gates execution unless the live market exposes executable YES/NO prices, avoiding a broken demo path. The quote/build adapters remain implemented for compatible primary markets.
