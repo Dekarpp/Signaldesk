@@ -2,23 +2,8 @@
 
 import {useState} from "react";
 
-type RegisterResult = {
-  userId?: string;
-  email?: string;
-  name?: string;
-  access?: string;
-  refresh?: string;
-  error?: string;
-};
-
-type KeyResult = {
-  id?: string;
-  prefix?: string;
-  env?: string;
-  secret?: string;
-  createdAt?: string;
-  error?: string;
-};
+type AuthResult = {access?: string; error?: string};
+type KeyResult = {secret?: string; verified?: boolean; verifyError?: string | null; error?: string};
 
 export default function SetupPage() {
   const [email, setEmail] = useState("");
@@ -26,42 +11,48 @@ export default function SetupPage() {
   const [name, setName] = useState("");
   const [access, setAccess] = useState("");
   const [key, setKey] = useState("");
-  const [registering, setRegistering] = useState(false);
-  const [creatingKey, setCreatingKey] = useState(false);
+  const [verified, setVerified] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function register() {
-    setRegistering(true);
+  async function auth(mode: "register" | "login") {
+    setBusy(true);
     setMessage("");
     setError("");
     setKey("");
+    setVerified(null);
 
     try {
-      const response = await fetch("/api/panta-register", {
+      const endpoint = mode === "register" ? "/api/panta-register" : "/api/panta-login";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({email, password, name}),
       });
-      const data: RegisterResult = await response.json();
+      const data: AuthResult = await response.json();
       if (!response.ok || !data.access) {
-        throw new Error(data.error ?? "Registration failed.");
+        throw new Error(data.error ?? (mode === "register" ? "Registration failed." : "Login failed."));
       }
 
       setAccess(data.access);
       setPassword("");
-      setMessage("Panta developer account created. Now create a test API key.");
+      setMessage(mode === "register"
+        ? "Developer account created. Now create a fresh test API key."
+        : "Signed in. Now create a fresh test API key.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed.");
+      setError(err instanceof Error ? err.message : "Authentication failed.");
     } finally {
-      setRegistering(false);
+      setBusy(false);
     }
   }
 
   async function createKey() {
-    setCreatingKey(true);
+    setBusy(true);
     setMessage("");
     setError("");
+    setKey("");
+    setVerified(null);
 
     try {
       const response = await fetch("/api/panta-create-key", {
@@ -75,18 +66,26 @@ export default function SetupPage() {
       }
 
       setKey(data.secret);
-      setMessage("API key created. Copy it now — Panta only shows the full secret once.");
+      setVerified(Boolean(data.verified));
+
+      if (data.verified) {
+        setMessage("API key created and verified against Panta. Copy this key into Vercel.");
+      } else {
+        setError(`Panta created the key, but immediately rejected it: ${data.verifyError ?? "authentication required or invalid"}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "API key creation failed.");
     } finally {
-      setCreatingKey(false);
+      setBusy(false);
     }
   }
 
   async function copyKey() {
     if (!key) return;
     await navigator.clipboard.writeText(key);
-    setMessage("Copied. Save it somewhere secure, then add it to Vercel as PANTA_API_KEY.");
+    setMessage(verified
+      ? "Verified key copied. Replace PANTA_API_KEY in Vercel with this exact value."
+      : "Key copied, but it did not verify. Do not use it in Vercel yet.");
   }
 
   return (
@@ -101,9 +100,9 @@ export default function SetupPage() {
 
       <section className="setupCard">
         <div className="eyebrow">Step 1</div>
-        <h1 className="setupTitle">Create Panta developer account</h1>
+        <h1 className="setupTitle">Connect your Panta developer account</h1>
         <p className="sub">
-          This form calls Panta's official public developer API directly. Your password is forwarded to Panta for registration and is not stored by SignalDesk.
+          Already registered? Sign in with the same email and password. Your password is forwarded to Panta and is not stored by SignalDesk.
         </p>
 
         <label>Email</label>
@@ -120,13 +119,13 @@ export default function SetupPage() {
         <input
           className="input"
           type="password"
-          autoComplete="new-password"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Minimum 8 characters"
+          placeholder="Your Panta developer password"
         />
 
-        <label>Name <span className="small">(optional)</span></label>
+        <label>Name <span className="small">(only used for new registration)</span></label>
         <input
           className="input"
           value={name}
@@ -137,34 +136,41 @@ export default function SetupPage() {
         <div className="controls">
           <button
             className="btn primary"
-            onClick={register}
-            disabled={registering || !email || password.length < 8}
+            onClick={() => auth("login")}
+            disabled={busy || !email || password.length < 8}
           >
-            {registering ? "Creating account…" : "Create developer account"}
+            {busy ? "Working…" : "Sign in"}
+          </button>
+          <button
+            className="btn"
+            onClick={() => auth("register")}
+            disabled={busy || !email || password.length < 8}
+          >
+            Create new account
           </button>
         </div>
       </section>
 
       <section className="setupCard">
         <div className="eyebrow">Step 2</div>
-        <h2>Create a Panta test API key</h2>
+        <h2>Create and verify a fresh Panta test key</h2>
         <p className="sub">
-          After registration succeeds, SignalDesk keeps the returned access token only in this browser page's memory and uses it once to request a <code>pk_test_…</code> key.
+          SignalDesk now checks the key against Panta immediately after creation, so we know it works before putting it into Vercel.
         </p>
 
         <div className="controls">
           <button
             className="btn primary"
             onClick={createKey}
-            disabled={creatingKey || !access}
+            disabled={busy || !access}
           >
-            {creatingKey ? "Creating key…" : "Create test API key"}
+            {busy ? "Working…" : "Create & verify test API key"}
           </button>
         </div>
 
         {key && (
           <div className="secretBox">
-            <div className="small">PANTA_API_KEY</div>
+            <div className="small">PANTA_API_KEY {verified ? "· VERIFIED" : "· NOT VERIFIED"}</div>
             <code>{key}</code>
             <button className="btn" onClick={copyKey}>Copy key</button>
           </div>
@@ -175,7 +181,7 @@ export default function SetupPage() {
       {error && <div className="error">{error}</div>}
 
       <section className="notice">
-        <strong>Security:</strong> do not send the password or API key in chat. After copying the key, store it in your deployment secrets. Refreshing this page clears the access token and displayed key from page memory.
+        <strong>Security:</strong> do not send your password or API key in chat. Refreshing this page clears the access token and displayed key from page memory.
       </section>
 
       <footer className="footer">
