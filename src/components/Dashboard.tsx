@@ -334,7 +334,12 @@ export default function Dashboard() {
       if (!res.ok) throw new Error(json.error ?? "Quote failed");
       setQuote(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Quote failed");
+      const message = err instanceof Error ? err.message : "Quote failed";
+      setError(
+        message === "MARKET_NOT_FOUND"
+          ? "Panta currently lists this market as primary, but its live order API is not quoting it yet. Try another priced primary market."
+          : message,
+      );
     }
   }
 
@@ -397,6 +402,11 @@ export default function Dashboard() {
     const value = activePositionValue(position);
     return value == null ? sum : sum + value;
   }, 0);
+
+  const executionAvailable =
+    selected?.phase === "primary" &&
+    selected.yes != null &&
+    selected.no != null;
 
   return (
     <main className="shell">
@@ -718,7 +728,7 @@ export default function Dashboard() {
               <div className="controls">
                 <button
                   className="btn"
-                  disabled={!wallet || selected.phase !== "primary"}
+                  disabled={!wallet || !executionAvailable}
                   onClick={getQuote}
                 >
                   Get quote
@@ -734,11 +744,17 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {selected.phase !== "primary" && (
+              {selected.phase !== "primary" ? (
                 <p className="small">
                   Quote preview is available for primary markets in this MVP.
                 </p>
-              )}
+              ) : !executionAvailable ? (
+                <p className="small">
+                  This market is listed by Panta as primary, but the live catalog is not
+                  exposing executable YES/NO prices for it right now. SignalDesk keeps
+                  execution disabled instead of presenting a broken quote flow.
+                </p>
+              ) : null}
 
               {quote && (
                 <div className="quoteResult">
