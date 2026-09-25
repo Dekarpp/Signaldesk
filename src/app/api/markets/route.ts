@@ -67,7 +67,7 @@ function isCurrentOrUpcoming(market: PantaMarket, nowSec: number) {
 export async function GET() {
   try {
     const nowSec = Date.now() / 1000;
-    const page = await listMarkets(40);
+    const page = await listMarkets(120);
 
     const active = [...page.items]
       .map(normalizeMarket)
@@ -124,6 +124,8 @@ export async function GET() {
       sandbox,
       categories: [...new Set(markets.map((market) => market.category).filter(Boolean))],
       dataQuality: {
+        catalogItemsFetched: page.items.length,
+        catalogPagesFetched: page.pagesFetched ?? 1,
         currentOrUpcoming: markets.filter((market) => (market.daysToClose ?? 0) >= 0).length,
         withReadableTitle: markets.filter((market) => Boolean(market.title?.trim())).length,
         executionReady: markets.filter(
