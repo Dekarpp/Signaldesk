@@ -36,3 +36,5 @@ Environment variables are configured in Vercel.
 Redeploy after Panta key rotation.
 
 Redeploy after OpenAI key rotation.
+
+Redeploy after switching Panta to live key.
