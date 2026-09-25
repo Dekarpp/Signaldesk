@@ -57,3 +57,23 @@ export function quotePrimaryBuy(input: {
     body: JSON.stringify(input),
   });
 }
+
+
+export type PantaTrade = {
+  id: string | number;
+  marketId: string;
+  wallet: string;
+  isPrimary: boolean;
+  yesAmount: string | number;
+  noAmount: string | number;
+  feePaid: string | number;
+  blockTime: number | null;
+  signature: string;
+  quoteAsset: string;
+};
+
+export function getMarketTrades(marketId: string, limit = 50) {
+  return pantaFetch<{marketId: string; items: PantaTrade[]}>(
+    "/markets/" + encodeURIComponent(marketId) + "/trades/?limit=" + Math.min(limit, 200),
+  );
+}
