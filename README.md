@@ -55,6 +55,8 @@ The product displays the required **Powered by Panta** attribution alongside Pan
 - Human-confirmation safety boundary: no automatic signing or broadcasting
 - Responsive desktop/mobile UI
 - Integration health indicators
+- Anonymous beta-usage instrumentation for hackathon traction evidence
+- In-product early-tester rating and feedback flow
 
 ## Architecture
 
@@ -155,6 +157,8 @@ SignalDesk is being prepared for:
 - **Panta API Sidetrack on Superteam Earn**
 
 The submission materials, copy, demo flow, business case, and final checklist are in [SUBMISSION.md](./SUBMISSION.md).
+
+Traction measurement is documented in [TRACTION.md](./TRACTION.md).
 
 ## Roadmap
 
