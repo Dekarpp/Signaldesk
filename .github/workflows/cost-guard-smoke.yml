@@ -13,7 +13,7 @@ jobs:
         run: |
           set -euo pipefail
           BASE="https://signaldesk-henna.vercel.app"
-          MARKET="$(curl -fsS "$BASE/api/markets" | jq -c '[.markets[] | select(.title | contains("GTA 6"))][0]')"
+          MARKET="$(curl -fsS "$BASE/api/markets" | jq -c '[.markets[] | select((.title // "") | contains("GTA 6"))][0]')"
           test "$MARKET" != "null"
           PAYLOAD="$(jq -n --argjson market "$MARKET" '{market:$market,mode:"research"}')"
           LAST=""
