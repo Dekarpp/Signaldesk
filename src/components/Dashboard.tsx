@@ -3,7 +3,7 @@
 import {useEffect, useMemo, useState} from "react";
 import type {SignalMarket} from "@/lib/types";
 import TractionPanel from "@/components/TractionPanel";
-import {trackSession, trackTraction} from "@/lib/traction-client";
+import {trackSession, trackTraction, tractionClientId} from "@/lib/traction-client";
 
 type MarketsResponse = {
   markets: SignalMarket[];
@@ -345,7 +345,10 @@ export default function Dashboard() {
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "X-SignalDesk-Client": tractionClientId(),
+        },
         body: JSON.stringify({
           market: selected,
           mode,
