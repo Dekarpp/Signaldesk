@@ -654,72 +654,91 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <div className="researchMeta">
-                <span>Research score <b>{selected.signalScore.toFixed(0)}</b></span>
-                <span>Implied YES <b>{pct(selected.yes)}</b></span>
+              <div className="researchMeta simpleMeta">
+                <span>YES chance <b>{pct(selected.yes)}</b></span>
+                <span>Priority <b>{selected.signalScore.toFixed(0)}</b></span>
                 <span>{daysLabel(selected.daysToClose)}</span>
-                <span>
-                  {activityLoading ? "Loading activity…" : "Recent trades "}
-                  {!activityLoading && <b>{activity?.tradeCount ?? 0}</b>}
-                </span>
               </div>
 
-              {activity && (
-                <div className="activityStrip">
-                  <div><span>YES flow</span><strong>{activity.yesFlow.toFixed(2)}</strong></div>
-                  <div><span>NO flow</span><strong>{activity.noFlow.toFixed(2)}</strong></div>
-                  <div><span>Primary</span><strong>{activity.primaryTrades}</strong></div>
-                  <div><span>Secondary</span><strong>{activity.secondaryTrades}</strong></div>
-                </div>
-              )}
-
-              <div className="controls">
+              <div className="controls researchActions">
                 <button
                   className="btn primary"
                   onClick={() => runResearch("research")}
                   disabled={analysisLoading}
                 >
-                  {analysisLoading ? "Researching the web…" : "Generate research brief"}
+                  {analysisLoading ? "Checking sources…" : "Explain this market"}
                 </button>
                 <button
                   className="btn"
                   onClick={() => runResearch("move")}
                   disabled={analysisLoading}
                 >
-                  Why did this market move?
+                  Explain the move
                 </button>
                 <button
                   className={"btn " + (watchlist.includes(selected.marketId) ? "watching" : "")}
                   onClick={() => toggleWatchlist(selected.marketId)}
                 >
-                  {watchlist.includes(selected.marketId) ? "★ Watching" : "☆ Add to watchlist"}
+                  {watchlist.includes(selected.marketId) ? "★ Watching" : "☆ Watch"}
                 </button>
                 {analysis && (
-                  <button className="btn" onClick={copyResearch}>Copy brief</button>
+                  <button className="btn quietBtn" onClick={copyResearch}>Copy</button>
                 )}
               </div>
 
-              <div className={"analysis " + (analysis ? "filled" : "")}>
-                {analysis ? (
-                  <ResearchBrief text={analysis} />
+              <div className={"analysis simpleAnalysis " + (brief ? "filled" : "")}>
+                {brief ? (
+                  <SimpleResearchBrief brief={brief} />
                 ) : (
-                  "The agent will separate facts from uncertainty, inspect catalysts and resolution mechanics, and produce watch triggers. It does not choose a trade for you."
+                  <div className="researchEmpty">
+                    <strong>Get the simple version.</strong>
+                    <span>
+                      SignalDesk will give you one clear answer, a few facts, the biggest uncertainty,
+                      and what to watch next.
+                    </span>
+                  </div>
                 )}
               </div>
+
+              {activity && (
+                <details className="detailsCard">
+                  <summary>Market activity · {activity.tradeCount} recent trade{activity.tradeCount === 1 ? "" : "s"}</summary>
+                  <div className="activityStrip">
+                    <div><span>YES flow</span><strong>{activity.yesFlow.toFixed(2)}</strong></div>
+                    <div><span>NO flow</span><strong>{activity.noFlow.toFixed(2)}</strong></div>
+                    <div><span>Primary</span><strong>{activity.primaryTrades}</strong></div>
+                    <div><span>Secondary</span><strong>{activity.secondaryTrades}</strong></div>
+                  </div>
+                </details>
+              )}
 
               {!!sources.length && (
-                <div className="sources">
-                  <div className="small sourceLabel">Sources used</div>
-                  {sources.map((source) => (
-                    <a href={source.url} target="_blank" rel="noreferrer" key={source.url}>
-                      {source.title}
-                    </a>
-                  ))}
-                </div>
+                <details className="detailsCard sourcesDetails">
+                  <summary>{sources.length} source{sources.length === 1 ? "" : "s"} checked</summary>
+                  <div className="sourceChips">
+                    {sources.map((source, index) => (
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        key={source.url}
+                        title={source.title}
+                      >
+                        <span>{index + 1}</span>
+                        {sourceDomain(source.url)}
+                      </a>
+                    ))}
+                  </div>
+                </details>
               )}
             </div>
 
-            <div className="quoteBox">
+            <details className="advancedPanel">
+              <summary>
+                <span>Advanced</span>
+                <strong>Wallet & execution</strong>
+              </summary>
+              <div className="quoteBox">
               <div className="eyebrow">Execution preview</div>
               <h3>Preview a primary-market quote</h3>
               <p className="small">
@@ -864,7 +883,8 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
-            </div>
+              </div>
+            </details>
           </div>
         </section>
       )}
@@ -880,22 +900,63 @@ export default function Dashboard() {
   );
 }
 
-function ResearchBrief({text}: {text: string}) {
+function SimpleResearchBrief({brief}: {brief: SimpleBrief}) {
   return (
-    <div className="brief">
-      {text.split("\n").map((line, index) => {
-        const trimmed = line.trim();
-        if (!trimmed) return <div className="briefSpace" key={index} />;
-        if (trimmed.startsWith("## ")) {
-          return <h3 key={index}>{trimmed.slice(3)}</h3>;
-        }
-        if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-          return <div className="briefBullet" key={index}>{trimmed.slice(2)}</div>;
-        }
-        return <p key={index}>{trimmed}</p>;
-      })}
+    <div className="simpleBrief">
+      <div className="briefHero">
+        <div>
+          <div className="briefKicker">Bottom line</div>
+          <h3>{brief.title}</h3>
+        </div>
+        <span className={"confidence confidence" + brief.confidence}>
+          {brief.confidence} confidence
+        </span>
+      </div>
+
+      <p className="bottomLine">{brief.bottomLine}</p>
+
+      {!!brief.keyPoints.length && (
+        <div className="briefSection">
+          <h4>What matters</h4>
+          <div className="simpleBullets">
+            {brief.keyPoints.map((point, index) => (
+              <div key={index}>
+                <span>{index + 1}</span>
+                <p>{point}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="uncertaintyBox">
+        <span>?</span>
+        <div>
+          <strong>Biggest uncertainty</strong>
+          <p>{brief.uncertainty}</p>
+        </div>
+      </div>
+
+      {!!brief.watch.length && (
+        <div className="briefSection">
+          <h4>Watch next</h4>
+          <div className="watchGrid">
+            {brief.watch.map((item, index) => (
+              <div key={index}>{item}</div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function sourceDomain(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "Source";
+  }
 }
 
 function Metric({value, label}: {value: string; label: string}) {
