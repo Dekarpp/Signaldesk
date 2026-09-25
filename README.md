@@ -2,7 +2,7 @@
 
 **AI research and execution-prep for prediction markets, powered by Panta.**
 
-SignalDesk turns live Panta markets into a prioritized research queue. It combines deterministic market scoring, Panta trade/activity data, live web research, watchlists, wallet-position intelligence, and guarded execution preparation so a user can understand a market before taking any action.
+SignalDesk turns live Panta markets into a prioritized decision-support workflow. It combines deterministic market scoring, Panta trade/activity data, live web research, a Market-vs-Evidence decision lens, watchlists, wallet-position intelligence, and guarded execution preparation so a user can understand what the market thinks, what the evidence says, and what could change the picture before taking any action.
 
 **Live demo:** https://signaldesk-henna.vercel.app
 
@@ -16,11 +16,12 @@ Prediction-market users often jump between a market page, news, social feeds, wa
 2. Rank markets by activity, uncertainty, and time sensitivity.
 3. Inspect recent Panta market activity.
 4. Ask an AI research agent for current evidence, catalysts, resolution risks, and watch triggers.
-5. Explain plausible drivers after a probability move.
-6. Track a personal watchlist.
-7. Inspect Panta wallet positions.
-8. When Panta exposes executable primary pricing, request a quote and prepare an **unsigned** Solana transaction.
-9. Hand control back to the user's wallet for any signing/broadcasting step.
+5. Compare the Panta market price with a separate evidence lens that shows whether current public evidence leans YES, balanced, NO, or remains unclear — without issuing a trade recommendation.
+6. Explain plausible drivers after a probability move.
+7. Track a personal watchlist.
+8. Inspect Panta wallet positions.
+9. When Panta exposes executable primary pricing, request a quote and prepare an **unsigned** Solana transaction.
+10. Hand control back to the user's wallet for any signing/broadcasting step.
 
 ## Panta integration
 
@@ -47,6 +48,9 @@ The product displays the required **Powered by Panta** attribution alongside Pan
 - Previous-scan probability deltas
 - Panta trade-tape summary: YES flow, NO flow, primary vs. secondary activity
 - AI research briefs with fresh web context and sources
+- **Market vs Evidence decision lens** — separates Panta's market-implied probability from the direction and strength of current public evidence
+- Decision support with supporting facts, counterevidence, and explicit conditions that would change the evidence view
+- Political-market safeguard: neutral factual analysis only; SignalDesk does not predict political outcomes
 - **Why did this market move?** research mode that treats observed price/activity changes as context rather than proof of causation
 - Public-wallet Panta positions view
 - Active-position mark-to-market estimates when a current Panta price is available
