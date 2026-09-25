@@ -67,6 +67,8 @@ function cleanBriefText(value: unknown, max: number) {
     .replace(/\s*\(\[[^\]]+\]\(https?:\/\/[^)]+\)\)/gi, "")
     .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/gi, "$1")
     .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\btotal volume\b/gi, "total money traded")
+    .replace(/\bvolume\b/gi, "money traded")
     .replace(/\s{2,}/g, " ")
     .replace(/\s+([,.;:!?])/g, "$1")
     .trim()
