@@ -33,5 +33,12 @@ jobs:
           echo "$RESULT" | jq -e '
             .brief.confidence=="Low" or .brief.confidence=="Medium" or .brief.confidence=="High"
           ' >/dev/null
+          echo "$RESULT" | jq -e '(.sources | length) >= 1' >/dev/null
+
+          TEXT_ONLY="$(echo "$RESULT" | jq -r '[.brief.title,.brief.bottomLine,.brief.uncertainty,.brief.keyPoints[],.brief.watch[]] | join(" ")')"
+          if echo "$TEXT_ONLY" | grep -Eiq 'https?://|\]\('; then
+            echo "INLINE_LINK_FOUND_IN_BRIEF"
+            exit 3
+          fi
 
           echo "CONCISE_RESEARCH_SMOKE_PASSED"
