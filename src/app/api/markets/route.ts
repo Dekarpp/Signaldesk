@@ -1,3 +1,4 @@
+import {unstable_cache} from "next/cache";
 import {NextResponse} from "next/server";
 import {getMarket, listMarkets} from "@/lib/panta";
 import {scoreMarket} from "@/lib/scoring";
@@ -64,8 +65,8 @@ function isCurrentOrUpcoming(market: PantaMarket, nowSec: number) {
   return end == null || end >= nowSec;
 }
 
-export async function GET() {
-  try {
+const getCachedMarkets = unstable_cache(
+  async () => {
     const nowSec = Date.now() / 1000;
     const page = await listMarkets(120);
 
@@ -116,7 +117,7 @@ export async function GET() {
           market.disclaimer?.toLowerCase().includes("sandbox"),
       );
 
-    return NextResponse.json({
+    return {
       markets,
       fetchedAt: new Date().toISOString(),
       source: "Panta API",
@@ -135,7 +136,15 @@ export async function GET() {
             market.no != null,
         ).length,
       },
-    });
+    };
+  },
+  ["signaldesk-panta-markets"],
+  {revalidate: 30},
+);
+
+export async function GET() {
+  try {
+    return NextResponse.json(await getCachedMarkets());
   } catch (error) {
     return NextResponse.json(
       {error: error instanceof Error ? error.message : "Unknown error"},
