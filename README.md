@@ -2,7 +2,7 @@
 
 **AI research and execution-prep for prediction markets, powered by Panta.**
 
-SignalDesk turns live Panta markets into a prioritized research queue. It combines deterministic market scoring, Panta trade/activity data, live web research, watchlists, wallet-position intelligence, and unsigned transaction building so a user can understand a market before taking any action.
+SignalDesk turns live Panta markets into a prioritized research queue. It combines deterministic market scoring, Panta trade/activity data, live web research, watchlists, wallet-position intelligence, and guarded execution preparation so a user can understand a market before taking any action.
 
 **Live demo:** https://signaldesk-henna.vercel.app
 
@@ -19,7 +19,7 @@ Prediction-market users often jump between a market page, news, social feeds, wa
 5. Explain plausible drivers after a probability move.
 6. Track a personal watchlist.
 7. Inspect Panta wallet positions.
-8. Request a Panta quote and build an **unsigned** Solana transaction.
+8. When Panta exposes executable primary pricing, request a quote and prepare an **unsigned** Solana transaction.
 9. Hand control back to the user's wallet for any signing/broadcasting step.
 
 ## Panta integration
@@ -50,8 +50,8 @@ The product displays the required **Powered by Panta** attribution alongside Pan
 - **Why did this market move?** research mode that treats observed price/activity changes as context rather than proof of causation
 - Public-wallet Panta positions view
 - Active-position mark-to-market estimates when a current Panta price is available
-- Primary-market quote preview
-- Unsigned Solana transaction build preview
+- Guarded primary-market quote preview
+- Unsigned Solana transaction build adapter
 - Human-confirmation safety boundary: no automatic signing or broadcasting
 - Responsive desktop/mobile UI
 - Integration health indicators
@@ -114,7 +114,7 @@ The near-term goal is to prove repeat usage around market monitoring and researc
 - Secrets are never committed to the repository.
 - Panta/OpenAI secrets are used server-side only.
 - Public wallet addresses can be queried for positions; private keys are never requested.
-- Transaction building stops at unsigned instructions.
+- Quote/build controls activate only when the selected live Panta market exposes executable primary pricing; transaction preparation stops at unsigned instructions.
 - Signing/broadcasting must happen in a user-controlled wallet.
 - Developer onboarding helpers are disabled by default and require SIGNALDESK_SETUP_ENABLED=true.
 - The product does not claim prediction-market prices are guaranteed forecasts or provide automatic trading advice.
