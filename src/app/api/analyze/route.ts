@@ -230,7 +230,7 @@ async function callResearchModel({
       reasoning: {effort: "low"},
       max_output_tokens: Math.max(
         250,
-        Math.min(Number(process.env.SIGNALDESK_AI_MAX_OUTPUT_TOKENS ?? 500), 700),
+        Math.min(Number(process.env.SIGNALDESK_AI_MAX_OUTPUT_TOKENS ?? 700), 700),
       ),
       text: {
         format: {
@@ -452,7 +452,7 @@ export async function POST(req: NextRequest) {
     const cacheKey = researchCacheKey(market, mode, context);
     const cachedResearch = unstable_cache(
       () => callResearchModel({apiKey, prompt, imageUrl, sandbox}),
-      ["signaldesk-ai-research-v2", cacheKey],
+      ["signaldesk-ai-research-v3", cacheKey],
       {revalidate: mode === "move" ? 300 : 1800},
     );
 
