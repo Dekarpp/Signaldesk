@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const access = String(body?.access ?? "").trim();
     const name = String(body?.name ?? "signaldesk").trim();
+    const env = body?.env === "live" ? "live" : "test";
 
     if (!access) {
       return NextResponse.json({error: "Access token is required."}, {status: 400});
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        env: "test",
+        env,
         name: name || "signaldesk",
         revokeOthers: false,
       }),
