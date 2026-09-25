@@ -5,6 +5,15 @@ import {checkAiRateLimit} from "@/lib/rate-limit";
 
 type Citation = {title: string; url: string};
 
+type DecisionLens = {
+  signal: "leans_yes" | "balanced" | "leans_no" | "unclear" | "not_assessed";
+  strength: "Low" | "Medium" | "High";
+  summary: string;
+  supporting: string[];
+  counter: string[];
+  changesView: string[];
+};
+
 type SimpleBrief = {
   title: string;
   bottomLine: string;
@@ -12,6 +21,7 @@ type SimpleBrief = {
   uncertainty: string;
   watch: string[];
   confidence: "Low" | "Medium" | "High";
+  decision: DecisionLens;
 };
 
 function extractResponse(data: any): {text: string; sources: Citation[]} {
@@ -87,6 +97,14 @@ function fallbackBrief(text: string): SimpleBrief {
     uncertainty: "The available evidence may be incomplete.",
     watch: [],
     confidence: "Low",
+    decision: {
+      signal: "unclear",
+      strength: "Low",
+      summary: "There is not enough clear evidence yet.",
+      supporting: [],
+      counter: [],
+      changesView: [],
+    },
   };
 }
 
@@ -113,6 +131,39 @@ function parseBrief(text: string): SimpleBrief {
         parsed?.confidence === "High" || parsed?.confidence === "Medium"
           ? parsed.confidence
           : "Low",
+      decision: {
+        signal:
+          parsed?.decision?.signal === "leans_yes" ||
+          parsed?.decision?.signal === "balanced" ||
+          parsed?.decision?.signal === "leans_no" ||
+          parsed?.decision?.signal === "not_assessed"
+            ? parsed.decision.signal
+            : "unclear",
+        strength:
+          parsed?.decision?.strength === "High" ||
+          parsed?.decision?.strength === "Medium"
+            ? parsed.decision.strength
+            : "Low",
+        summary: cleanBriefText(parsed?.decision?.summary, 220),
+        supporting: Array.isArray(parsed?.decision?.supporting)
+          ? parsed.decision.supporting
+              .map((item: unknown) => cleanBriefText(item, 180))
+              .filter(Boolean)
+              .slice(0, 3)
+          : [],
+        counter: Array.isArray(parsed?.decision?.counter)
+          ? parsed.decision.counter
+              .map((item: unknown) => cleanBriefText(item, 180))
+              .filter(Boolean)
+              .slice(0, 2)
+          : [],
+        changesView: Array.isArray(parsed?.decision?.changesView)
+          ? parsed.decision.changesView
+              .map((item: unknown) => cleanBriefText(item, 180))
+              .filter(Boolean)
+              .slice(0, 3)
+          : [],
+      },
     };
   } catch {
     return fallbackBrief(text);
@@ -131,7 +182,8 @@ function briefToText(brief: SimpleBrief) {
     "",
     ...brief.watch.map((item) => "Watch: " + item),
     "",
-    "Confidence: " + brief.confidence,
+    "Evidence: " + brief.confidence,
+    "Decision lens: " + brief.decision.summary,
   ];
   return lines.filter((line, index, all) => line || all[index - 1]).join("\n").trim();
 }
@@ -203,6 +255,34 @@ async function callResearchModel({
                 type: "string",
                 enum: ["Low", "Medium", "High"],
               },
+              decision: {
+                type: "object",
+                properties: {
+                  signal: {
+                    type: "string",
+                    enum: ["leans_yes", "balanced", "leans_no", "unclear", "not_assessed"],
+                  },
+                  strength: {
+                    type: "string",
+                    enum: ["Low", "Medium", "High"],
+                  },
+                  summary: {type: "string"},
+                  supporting: {
+                    type: "array",
+                    items: {type: "string"},
+                  },
+                  counter: {
+                    type: "array",
+                    items: {type: "string"},
+                  },
+                  changesView: {
+                    type: "array",
+                    items: {type: "string"},
+                  },
+                },
+                required: ["signal", "strength", "summary", "supporting", "counter", "changesView"],
+                additionalProperties: false,
+              },
             },
             required: [
               "title",
@@ -211,6 +291,7 @@ async function callResearchModel({
               "uncertainty",
               "watch",
               "confidence",
+              "decision",
             ],
             additionalProperties: false,
           },
@@ -329,6 +410,9 @@ export async function POST(req: NextRequest) {
           : null),
     };
 
+    const politicalMarket =
+      String(market?.category ?? "").toLowerCase().includes("politic");
+
     const prompt = [
       "You are the research layer of SignalDesk, a prediction-market intelligence product.",
       "Explain the market so clearly that a smart 8-year-old could follow the structure.",
@@ -351,6 +435,13 @@ export async function POST(req: NextRequest) {
       "Return no more than 3 watch items. Each must be one short sentence.",
       "Do not include URLs in any text field. Sources are displayed separately by the product.",
       "The confidence field means confidence in the quality of the evidence, not confidence that YES or NO will win.",
+      "Add a decision lens that helps the user reason, without giving trading instructions.",
+      "For non-political markets, decision.signal may say leans_yes, balanced, leans_no, or unclear based only on current public evidence.",
+      "Decision strength describes how strong the evidence is, not expected return and not certainty of the outcome.",
+      "Return up to 3 short supporting facts, up to 2 counterpoints, and up to 3 concrete things that would change the evidence view.",
+      politicalMarket
+        ? "POLITICAL MARKET: set decision.signal to not_assessed. Do not predict the political outcome or favor a candidate, party, or ballot choice. Use the decision section only to summarize neutral factual considerations and uncertainty."
+        : "",
       "",
       "MARKET:",
       JSON.stringify(marketForResearch, null, 2),
@@ -361,11 +452,18 @@ export async function POST(req: NextRequest) {
     const cacheKey = researchCacheKey(market, mode, context);
     const cachedResearch = unstable_cache(
       () => callResearchModel({apiKey, prompt, imageUrl, sandbox}),
-      ["signaldesk-ai-research", cacheKey],
+      ["signaldesk-ai-research-v2", cacheKey],
       {revalidate: mode === "move" ? 300 : 1800},
     );
 
     const research = await cachedResearch();
+
+    if (politicalMarket) {
+      research.brief.decision.signal = "not_assessed";
+      research.brief.decision.summary =
+        research.brief.decision.summary ||
+        "SignalDesk does not predict political outcomes; review the sourced facts and uncertainty.";
+    }
 
     return NextResponse.json({
       brief: research.brief,
