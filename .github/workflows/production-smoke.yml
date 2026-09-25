@@ -1,0 +1,55 @@
+name: Production smoke test
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exercise SignalDesk production
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://signaldesk-henna.vercel.app"
+
+          echo "1) health"
+          HEALTH="$(curl --fail-with-body -sS "$BASE/api/health")"
+          echo "$HEALTH" | jq -e '.pantaConfigured == true and .openaiAuthOk == true' >/dev/null
+
+          echo "2) markets"
+          MARKETS="$(curl --fail-with-body -sS "$BASE/api/markets")"
+          echo "$MARKETS" | jq -e '.mode == "live" and (.markets | length) > 0' >/dev/null
+          MARKET_ID="$(echo "$MARKETS" | jq -r '.markets[] | select(.phase=="primary") | .marketId' | head -n1)"
+          WALLET="$(echo "$MARKETS" | jq -r '.markets[] | select(.phase=="primary" and .creatorAddress != null) | .creatorAddress' | head -n1)"
+          RESEARCH_MARKET="$(echo "$MARKETS" | jq -c '[.markets[] | select(.category!="politics")][0]')"
+          test -n "$MARKET_ID"
+          test -n "$WALLET"
+          test "$RESEARCH_MARKET" != "null"
+
+          echo "3) market activity"
+          ACTIVITY="$(curl --fail-with-body -sS "$BASE/api/market-activity?marketId=$MARKET_ID")"
+          echo "$ACTIVITY" | jq -e '.marketId != null and .tradeCount != null' >/dev/null
+
+          echo "4) positions"
+          POSITIONS="$(curl --fail-with-body -sS "$BASE/api/positions?wallet=11111111111111111111111111111111")"
+          echo "$POSITIONS" | jq -e '.positions != null' >/dev/null
+
+          echo "5) AI research"
+          ANALYZE_PAYLOAD="$(jq -n --argjson market "$RESEARCH_MARKET" '{market:$market,mode:"research"}')"
+          ANALYSIS="$(curl --fail-with-body -sS -X POST "$BASE/api/analyze" -H 'content-type: application/json' --data "$ANALYZE_PAYLOAD")"
+          echo "$ANALYSIS" | jq -e '.analysis | type=="string" and length>20' >/dev/null
+
+          echo "6) primary quote"
+          QUOTE_PAYLOAD="$(jq -n --arg wallet "$WALLET" --arg marketId "$MARKET_ID" '{wallet:$wallet,marketId:$marketId,side:"yes",amountUsdc:"1"}')"
+          QUOTE="$(curl --fail-with-body -sS -X POST "$BASE/api/quote" -H 'content-type: application/json' --data "$QUOTE_PAYLOAD")"
+          QUOTE_ID="$(echo "$QUOTE" | jq -r '.quoteId // empty')"
+          test -n "$QUOTE_ID"
+
+          echo "7) unsigned build"
+          BUILD_PAYLOAD="$(jq -n --arg wallet "$WALLET" --arg quoteId "$QUOTE_ID" '{wallet:$wallet,quoteId:$quoteId,maxSlippageBps:100}')"
+          BUILD="$(curl --fail-with-body -sS -X POST "$BASE/api/build" -H 'content-type: application/json' --data "$BUILD_PAYLOAD")"
+          echo "$BUILD" | jq -e '.signingRequired == true and .broadcasted == false and .instructionCount > 0' >/dev/null
+
+          echo "ALL_PRODUCTION_SMOKE_TESTS_PASSED"
