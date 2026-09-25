@@ -2,6 +2,8 @@
 
 import {useEffect, useMemo, useState} from "react";
 import type {SignalMarket} from "@/lib/types";
+import TractionPanel from "@/components/TractionPanel";
+import {trackSession, trackTraction} from "@/lib/traction-client";
 
 type MarketsResponse = {
   markets: SignalMarket[];
@@ -178,6 +180,7 @@ export default function Dashboard() {
       }
     }
 
+    trackSession();
     void refresh();
 
     void fetch("/api/health", {cache: "no-store"})
@@ -247,6 +250,10 @@ export default function Dashboard() {
 
   function chooseMarket(market: SignalMarket) {
     setSelected(market);
+    void trackTraction("market_opened", {
+      category: market.category ?? undefined,
+      phase: market.phase,
+    });
     setAnalysis("");
     setSources([]);
     setActivity(null);
@@ -268,6 +275,14 @@ export default function Dashboard() {
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem("signaldesk:watchlist", JSON.stringify(next));
+      }
+
+      if (!current.includes(marketId)) {
+        const market = data?.markets.find((item) => item.marketId === marketId);
+        void trackTraction("watchlist_add", {
+          category: market?.category ?? undefined,
+          phase: market?.phase,
+        });
       }
 
       return next;
@@ -301,6 +316,13 @@ export default function Dashboard() {
       if (!res.ok) throw new Error(json.error ?? "Research failed");
       setAnalysis(json.analysis);
       setSources(Array.isArray(json.sources) ? json.sources : []);
+      void trackTraction(
+        mode === "move" ? "move_research_generated" : "research_generated",
+        {
+          category: selected.category ?? undefined,
+          phase: selected.phase,
+        },
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Research failed");
     } finally {
@@ -333,6 +355,10 @@ export default function Dashboard() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Quote failed");
       setQuote(json);
+      void trackTraction("quote_generated", {
+        category: selected.category ?? undefined,
+        phase: selected.phase,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Quote failed";
       setError(
@@ -362,6 +388,10 @@ export default function Dashboard() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Transaction build failed");
       setBuildPreview(json);
+      void trackTraction("build_generated", {
+        category: selected?.category ?? undefined,
+        phase: selected?.phase,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Transaction build failed");
     } finally {
@@ -381,7 +411,9 @@ export default function Dashboard() {
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Unable to load positions");
-      setPositions(Array.isArray(json.positions) ? json.positions : []);
+      const nextPositions = Array.isArray(json.positions) ? json.positions : [];
+      setPositions(nextPositions);
+      void trackTraction("positions_loaded", {count: nextPositions.length});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load positions");
     } finally {
@@ -832,6 +864,8 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+
+      <TractionPanel />
 
       <footer className="footer">
         <a href="https://panta.market" target="_blank" rel="noreferrer"><b>Powered by Panta</b></a>
