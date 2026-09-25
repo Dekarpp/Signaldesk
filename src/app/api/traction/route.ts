@@ -40,6 +40,7 @@ export async function POST(request: Request) {
                 ? Math.max(1, Math.min(Number(body.properties.rating), 5))
                 : undefined,
             role: cleanString(body.properties.role, 40) || undefined,
+            source: cleanString(body.properties.source, 60) || undefined,
             message: cleanString(body.properties.message, 500) || undefined,
           }
         : {};
