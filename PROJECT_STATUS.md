@@ -1,6 +1,6 @@
 # SignalDesk — Project Status
 
-_Last updated: 2026-09-25 15:47 UTC_
+_Last updated: 2026-09-25 16:00 UTC_
 
 This file is the handoff/source-of-truth for continuing SignalDesk if chat context is lost.
 
@@ -24,8 +24,8 @@ Primary external goal: prepare a strong Panta API hackathon/sidetrack submission
 - Vercel project: `signaldesk`
 - Production: https://signaldesk-henna.vercel.app
 - Alternate production alias: https://signaldesk-dekarp8-1008.vercel.app
-- Current production snapshot: `1cb93f4c0d354e3c2c8b43a6651d533cf3105a13`
-- Current snapshot message: `style: polish watchlist controls`
+- Current production snapshot: `6fd2e0713db612bffaa3cc42edccab75130dc0b2`
+- Current snapshot message: `docs: add MIT license`
 
 GitHub Actions CI runs `npm install` and `npm run build` on pushes / PRs.
 Vercel is connected to GitHub and auto-deploys `main`.
@@ -45,6 +45,8 @@ Verified against production on 2026-09-25:
 - Sandbox: `false`
 - Latest Vercel production deployment -> `READY`
 - Latest build -> Next.js compile + TypeScript succeeded
+- Production `/setup` -> 404 (developer onboarding disabled)
+- Last-hour Vercel runtime error clusters -> none
 
 The live Panta catalog currently returns real markets. At the verification snapshot, categories included:
 - gaming
@@ -110,6 +112,9 @@ The score is an attention/research priority, not an expected-return estimate.
 - integration health indicators
 - browser-local watchlist with watchlist-only filtering
 - watchlist state persists in `localStorage`
+- Panta wallet positions UI with active mark-to-market context
+- "Why did this market move?" research mode
+- unsigned Panta primary transaction build preview
 
 ### AI research
 Endpoint: `POST /api/analyze`
@@ -144,12 +149,14 @@ Uses Panta market trade tape and summarizes:
 ### Positions
 Endpoint: `GET /api/positions?wallet=...`
 
-Panta positions plumbing exists. Full portfolio UI is not yet completed.
+Panta positions are now surfaced in the dashboard for a public wallet. Active positions can show an estimated mark-to-market value when a current Panta price is available.
 
-### Quote preview
-Endpoint: `POST /api/quote`
+### Quote / unsigned build
+Endpoints:
+- `POST /api/quote`
+- `POST /api/build`
 
-Supports primary-market quote preview.
+Supports primary-market quote preview and Panta unsigned transaction building. The build response is sanitized for UI display and never signs or broadcasts.
 
 Safety rule:
 - SignalDesk does not automatically sign or broadcast transactions.
@@ -209,7 +216,7 @@ Do not expose this page as a public onboarding feature without adding proper acc
    - No automatic signing/broadcasting.
    - Future transaction build flow must require explicit wallet confirmation.
 
-7. `/setup` is useful for development but should be protected or removed from public production before a polished public launch.
+7. `/setup` is disabled by default in public production and returns 404 unless `SIGNALDESK_SETUP_ENABLED=true`.
 
 8. No persistence/database yet.
    - Research briefs, alerts, user watchlists, and historical scores are not stored server-side.
@@ -223,27 +230,34 @@ Do not expose this page as a public onboarding feature without adding proper acc
 
 ### P1 — make the product compelling for judges
 - Upgrade the browser-local watchlist to server persistence if time permits.
-- Add persistent market snapshots/history.
-- Show meaningful probability change over time.
-- Add “why this market moved” research refresh.
+- Add persistent market snapshots/history if time permits.
 - Improve metadata fallback for incomplete Panta entries.
-- Add wallet positions UI and estimated position value.
+- Visually exercise the new wallet-position and unsigned-build flows with a suitable public wallet / primary market before recording the demo.
 
 ### P2 — execution demo
-- Build unsigned transaction flow using Panta where appropriate.
-- Keep wallet signing client-side.
+- Unsigned Panta build is implemented.
+- Future signing must remain client-side.
 - Require an explicit human confirmation step.
 - Never store seed phrases/private keys.
 
 ### P3 — submission package
-- tighten README
-- architecture diagram
-- screenshots
-- 2-minute demo flow
+Completed in repo:
+- submission-ready README
+- Mermaid architecture diagram
+- 2-minute demo script
 - deployment link
-- clear explanation of meaningful Panta integration
-- tests / CI evidence
-- verify hackathon rules, deadline, eligibility, and required submission fields before submitting
+- Panta integration explanation
+- business model
+- security model
+- MIT license
+- copy-ready Colosseum and Panta Sidetrack submission text
+
+Manual blockers remaining:
+- repository is still private; make it public before submission
+- record/upload the ~2-minute demo video
+- submit to Colosseum Crypto World's Fair by October 12, 2026 11:59 PM PT
+- submit separately to the Panta API Sidetrack on Superteam Earn
+- perform final human review of public materials
 
 ## Demo Story
 
@@ -296,3 +310,4 @@ SignalDesk MVP is ready for a serious submission when:
 - mobile UI is polished
 - CI and production deploy are green
 - README/demo/submission package are complete
+- public repository and demo video are attached to the final submissions
