@@ -10,11 +10,11 @@ This file is the copy-ready package for the Colosseum Crypto World's Fair submis
 
 ## One-line description
 
-SignalDesk turns live Panta markets into an AI-assisted research queue, combining market activity, probability moves, wallet positions, fresh web evidence, and human-confirmed transaction preparation.
+SignalDesk turns live Panta markets into an AI-assisted research queue, combining market activity, probability moves, wallet positions, fresh web evidence, and guarded execution preparation.
 
 ## Short description
 
-SignalDesk is a prediction-market intelligence terminal built on the Panta API. It scans live markets, ranks what deserves attention, summarizes recent Panta trading activity, researches fresh real-world evidence, explains plausible drivers behind market moves, tracks watchlists and public-wallet positions, and can request a Panta quote plus build an unsigned Solana transaction. It deliberately stops before signing or broadcasting so the user remains in control.
+SignalDesk is a prediction-market intelligence terminal built on the Panta API. It scans live markets, ranks what deserves attention, summarizes recent Panta trading activity, researches fresh real-world evidence, explains plausible drivers behind market moves, and tracks watchlists and public-wallet positions. It also implements Panta primary quote and unsigned-build adapters; the UI only enables that path when the live Panta catalog exposes executable primary pricing, and it always stops before signing or broadcasting.
 
 ## Problem
 
@@ -37,8 +37,8 @@ SignalDesk creates a research-first workflow:
 - "Why did this market move?" analysis
 - local watchlists
 - Panta wallet positions
-- primary-market quote preview
-- unsigned transaction build
+- guarded primary-market quote preview when Panta exposes executable primary pricing
+- unsigned transaction build adapter
 - explicit human wallet confirmation before any signing/broadcast
 
 ## Why Panta is essential
@@ -183,19 +183,19 @@ Say:
 
 "SignalDesk also connects research to the user's actual Panta exposure without asking for private keys."
 
-### 1:30–1:50 — Execution preparation
+### 1:30–1:50 — Wallet intelligence + execution boundary
 
 Select a primary market.
 
 Show:
-- quote
-- unsigned transaction build
+- load a public wallet's Panta positions
+- show that execution stays disabled when the selected Panta market has no executable live pricing
 - instruction count
 - human-confirmation badge
 
 Say:
 
-"Panta takes us all the way to transaction building, but SignalDesk deliberately stops before signing. The wallet remains the execution boundary."
+"SignalDesk connects research to public Panta wallet exposure, and it guards execution when live Panta order data is unavailable. The wallet remains the execution boundary."
 
 ### 1:50–2:00 — Close
 
@@ -205,7 +205,7 @@ Say:
 
 ### What did you build?
 
-SignalDesk is an AI research and market-intelligence layer for Panta. It converts live prediction markets into a prioritized research queue, combines Panta prices and trade activity with current public evidence, explains likely drivers behind market movement, surfaces wallet positions, and prepares unsigned Panta transactions for explicit user-controlled execution.
+SignalDesk is an AI research and market-intelligence layer for Panta. It converts live prediction markets into a prioritized research queue, combines Panta prices and trade activity with current public evidence, explains likely drivers behind market movement, surfaces wallet positions, and includes guarded adapters for Panta quote and unsigned transaction preparation.
 
 ### Why is it useful?
 
@@ -213,7 +213,7 @@ Prediction-market users currently have to assemble context manually across marke
 
 ### How does it use blockchain?
 
-Panta's Solana-based market infrastructure is the product's source of market state and execution primitives. SignalDesk consumes Panta market discovery, market detail, trades, positions, quote generation, and transaction-building flows. The final signature remains with the user's wallet.
+Panta's Solana-based market infrastructure is the product's source of market state and execution primitives. SignalDesk consumes Panta market discovery, market detail, trades and positions in the live workflow, and implements Panta quote-generation and transaction-building adapters behind a live-data capability guard. The final signature remains with the user's wallet.
 
 ### Business potential
 
@@ -223,7 +223,7 @@ SignalDesk can monetize through a Pro research subscription for alerts/history/s
 
 SignalDesk is an AI + prediction-market intelligence terminal built directly on the Panta API.
 
-It uses Panta for live market discovery, market detail/prices, recent market trades, wallet positions, primary-market quotes, and unsigned transaction building. SignalDesk then adds a research layer: deterministic attention scoring, watchlists, fresh web research with sources, and a "Why did this market move?" workflow that combines observed Panta price/activity context with real-world evidence.
+It uses Panta for live market discovery, market detail/prices, recent market trades and wallet positions, with guarded primary-market quote and unsigned-transaction adapters. SignalDesk then adds a research layer: deterministic attention scoring, watchlists, fresh web research with sources, and a "Why did this market move?" workflow that combines observed Panta price/activity context with real-world evidence.
 
 The result is a product that helps users understand Panta markets before they act. Execution remains non-custodial and human-confirmed: SignalDesk never stores private keys and never auto-signs or auto-broadcasts transactions.
 
