@@ -176,7 +176,10 @@ async function callResearchModel({
             include: ["web_search_call.action.sources"],
           }),
       reasoning: {effort: "low"},
-      max_output_tokens: 700,
+      max_output_tokens: Math.max(
+        250,
+        Math.min(Number(process.env.SIGNALDESK_AI_MAX_OUTPUT_TOKENS ?? 500), 700),
+      ),
       text: {
         format: {
           type: "json_schema",
@@ -301,6 +304,31 @@ export async function POST(req: NextRequest) {
         ? market.images[0]
         : null;
 
+    const marketForResearch = {
+      marketId: market?.marketId ?? "",
+      category: market?.category ?? null,
+      title: market?.title ?? "",
+      description: market?.description ?? "",
+      question: market?.question ?? "",
+      phase: market?.phase ?? "",
+      yes: market?.yes ?? null,
+      no: market?.no ?? null,
+      volume: market?.volume ?? null,
+      daysToClose: market?.daysToClose ?? null,
+      startTime: market?.startTime ?? null,
+      endTime: market?.endTime ?? null,
+      resolutionTime: market?.resolutionTime ?? null,
+      region: market?.region ?? null,
+      oracle: market?.oracle ?? null,
+      sources: Array.isArray(market?.sources) ? market.sources.slice(0, 8) : [],
+      attentionReason: market?.attentionReason ?? "",
+      resolutionRule:
+        market?.resolutionRule ??
+        (market?.onChain && typeof market.onChain === "object"
+          ? (market.onChain as Record<string, unknown>).resolutionRule ?? null
+          : null),
+    };
+
     const prompt = [
       "You are the research layer of SignalDesk, a prediction-market intelligence product.",
       "Explain the market so clearly that a smart 8-year-old could follow the structure.",
@@ -325,7 +353,7 @@ export async function POST(req: NextRequest) {
       "The confidence field means confidence in the quality of the evidence, not confidence that YES or NO will win.",
       "",
       "MARKET:",
-      JSON.stringify(market, null, 2),
+      JSON.stringify(marketForResearch, null, 2),
       mode === "move" ? "SIGNALDESK OBSERVED CONTEXT:" : "",
       mode === "move" ? JSON.stringify(context, null, 2) : "",
     ].filter(Boolean).join("\n");
