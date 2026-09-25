@@ -3,6 +3,10 @@ import {NextRequest, NextResponse} from "next/server";
 const BASE = process.env.PANTA_API_BASE_URL ?? "https://live-api.panta.market/api/v1";
 
 export async function POST(req: NextRequest) {
+  if (process.env.SIGNALDESK_SETUP_ENABLED !== "true") {
+    return NextResponse.json({error: "Not found"}, {status: 404});
+  }
+
   try {
     const body = await req.json();
     const email = String(body?.email ?? "").trim();
