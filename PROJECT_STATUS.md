@@ -253,7 +253,7 @@ Completed in repo:
 - copy-ready Colosseum and Panta Sidetrack submission text
 
 Manual blockers remaining:
-- repository is still private; make it public before submission
+- repository is public and judge-accessible
 - record/upload the ~2-minute demo video
 - submit to Colosseum Crypto World's Fair by October 12, 2026 11:59 PM PT
 - submit separately to the Panta API Sidetrack on Superteam Earn
