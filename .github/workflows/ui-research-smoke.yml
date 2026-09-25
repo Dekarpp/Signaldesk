@@ -1,0 +1,37 @@
+name: UI research smoke
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify concise live research
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://signaldesk-henna.vercel.app"
+          MARKETS="$(curl --fail-with-body -sS "$BASE/api/markets")"
+          MARKET="$(echo "$MARKETS" | jq -c '[.markets[] | select(.category=="gaming")][0]')"
+          test "$MARKET" != "null"
+
+          PAYLOAD="$(jq -n --argjson market "$MARKET" '{market:$market,mode:"research"}')"
+          RESULT="$(curl --fail-with-body -sS -X POST "$BASE/api/analyze" -H 'content-type: application/json' --data "$PAYLOAD")"
+
+          echo "$RESULT" | jq '{brief, sourceCount:(.sources|length), mode}'
+          echo "$RESULT" | jq -e '
+            .brief.bottomLine | type=="string" and length>10
+          ' >/dev/null
+          echo "$RESULT" | jq -e '
+            .brief.keyPoints | type=="array" and length<=4
+          ' >/dev/null
+          echo "$RESULT" | jq -e '
+            .brief.watch | type=="array" and length<=3
+          ' >/dev/null
+          echo "$RESULT" | jq -e '
+            .brief.confidence=="Low" or .brief.confidence=="Medium" or .brief.confidence=="High"
+          ' >/dev/null
+
+          echo "CONCISE_RESEARCH_SMOKE_PASSED"
