@@ -1882,3 +1882,94 @@ h1 {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+.scoreBars {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.scoreBarRow {
+  display: grid;
+  gap: 6px;
+}
+
+.scoreBarLabel {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.scoreBarLabel strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.scoreBarTrack {
+  overflow: hidden;
+  height: 9px;
+  border-radius: 999px;
+  background: #202833;
+}
+
+.scoreBarTrack > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.timelineChart {
+  margin-top: 31px;
+}
+
+.timelineTrack {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: #202833;
+}
+
+.timelineTrack > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.timelineTrack > span {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--panel-3);
+  border: 3px solid var(--accent);
+}
+
+.timelineLabels {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.timelineLabels span:nth-child(2) {
+  text-align: center;
+  color: var(--text);
+}
+
+.timelineLabels span:last-child {
+  text-align: right;
+}
+
+.timelineLabels b {
+  color: var(--text);
+  font-weight: 750;
+}
