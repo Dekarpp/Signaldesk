@@ -568,7 +568,7 @@ export default function Dashboard() {
             <option value="secondary">Secondary</option>
           </select>
           <select className="select" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
-            <option value="signal">Sort: research score</option>
+            <option value="signal">Sort: priority</option>
             <option value="volume">Sort: volume</option>
             <option value="deadline">Sort: deadline</option>
           </select>
@@ -582,54 +582,45 @@ export default function Dashboard() {
             key={market.marketId}
             onClick={() => chooseMarket(market)}
           >
-            <div className="cardTop">
-              <div className="score">{market.signalScore.toFixed(0)}</div>
+            <div className="cardTop simpleCardTop">
               <div className="cardTags">
+                <span className="categoryTag">{market.category ?? "market"}</span>
+                <span className="phase">{market.phase}</span>
                 {watchlist.includes(market.marketId) && (
                   <span className="watchFlag">★ saved</span>
                 )}
-                <span className="phase">{market.phase}</span>
-                <span className="reasonTag">{market.attentionReason}</span>
+              </div>
+              <div className="priorityBadge">
+                <span>Priority</span>
+                <strong>{market.signalScore.toFixed(0)}</strong>
               </div>
             </div>
 
             <div className="marketTitle">{marketLabel(market)}</div>
-            <p className="marketDescription">
-              {marketDescription(market)}
-            </p>
-
-            {market.images?.[0] && (
-              <div className="marketImage">
-                <img src={market.images[0]} alt="" loading="lazy" />
-                {!market.title?.trim() && (
-                  <span>Question available in Panta image</span>
-                )}
-              </div>
+            {market.description?.trim() && market.description.trim() !== market.title?.trim() && (
+              <p className="marketDescription">{marketDescription(market)}</p>
             )}
 
             <div className="probabilityBar" aria-label="Market-implied probability">
               <div style={{width: String(Math.round((market.yes ?? 0.5) * 100)) + "%"}} />
             </div>
 
-            <div className="priceRow">
+            <div className="simpleStats">
               <div><span>YES</span><strong>{pct(market.yes)}</strong></div>
               <div><span>NO</span><strong>{pct(market.no)}</strong></div>
-              <div><span>VOL</span><strong>{usd(market.volume)}</strong></div>
+              <div><span>Closes</span><strong>{daysLabel(market.daysToClose)}</strong></div>
             </div>
 
-            <div className="scoreBreakdown">
-              <span>Activity {market.liquidityScore.toFixed(0)}</span>
-              <span>Uncertainty {market.disagreementScore.toFixed(0)}</span>
-              <span>Timing {market.timingScore.toFixed(0)}</span>
+            <div className="cardFooter">
+              <span>{market.attentionReason}</span>
+              <span>{usd(market.volume)} volume</span>
             </div>
-            <div className="deadlineRow">
-              <span>{daysLabel(market.daysToClose)}</span>
-              {typeof priceDeltas[market.marketId] === "number" && Math.abs(priceDeltas[market.marketId]) >= 0.0001 && (
-                <span className={priceDeltas[market.marketId] > 0 ? "deltaUp" : "deltaDown"}>
-                  YES {priceDeltas[market.marketId] > 0 ? "+" : ""}{(priceDeltas[market.marketId] * 100).toFixed(1)} pts since last scan
-                </span>
-              )}
-            </div>
+
+            {typeof priceDeltas[market.marketId] === "number" && Math.abs(priceDeltas[market.marketId]) >= 0.0001 && (
+              <div className={priceDeltas[market.marketId] > 0 ? "deltaUp simpleDelta" : "deltaDown simpleDelta"}>
+                YES {priceDeltas[market.marketId] > 0 ? "+" : ""}{(priceDeltas[market.marketId] * 100).toFixed(1)} pts since last scan
+              </div>
+            )}
           </button>
         ))}
 
