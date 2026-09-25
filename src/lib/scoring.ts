@@ -27,7 +27,9 @@ export function scoreMarket(
   market: PantaMarket,
   nowSec = Date.now() / 1000,
 ): SignalMarket {
-  const volume = Number(market.volumeUsdc ?? market.totalVolumeUsdc ?? 0) || 0;
+  const activeVolume = Number(market.volumeUsdc ?? 0) || 0;
+  const totalVolume = Number(market.totalVolumeUsdc ?? 0) || 0;
+  const volume = Math.max(activeVolume, totalVolume);
   const yes = toNumber(
     market.yesPrice ?? market.primaryYesPrice ?? market.secondaryYesPrice,
   );
