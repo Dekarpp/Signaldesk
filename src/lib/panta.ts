@@ -3,7 +3,7 @@ import type {PantaMarket} from "./types";
 const BASE = process.env.PANTA_API_BASE_URL ?? "https://live-api.panta.market/api/v1";
 
 function headers() {
-  const key = process.env.PANTA_API_KEY?.replace(/\\s+/g, "");
+  const key = process.env.PANTA_API_KEY?.replace(/\s+/g, "");
   if (!key) throw new Error("PANTA_API_KEY is not configured");
   return {"X-Api-Key": key, "Content-Type": "application/json"};
 }
