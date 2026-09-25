@@ -53,14 +53,26 @@ export async function POST(req: NextRequest) {
       String(market?.marketId ?? "").startsWith("TestMarket") ||
       String(market?.disclaimer ?? "").toLowerCase().includes("sandbox");
 
+    const hasTextMetadata =
+      Boolean(String(market?.title ?? "").trim()) ||
+      Boolean(String(market?.description ?? "").trim());
+    const imageUrl =
+      Array.isArray(market?.images) && typeof market.images[0] === "string"
+        ? market.images[0]
+        : null;
+
     const prompt = [
       "You are the research layer of SignalDesk, a prediction-market intelligence product.",
       "Use fresh public web information where the market refers to a real-world event.",
       "Do not recommend a trade, do not promise returns, and do not invent facts.",
-      "Separate facts, market-implied probability, uncertainty, and resolution mechanics.",
+      "Separate verified facts, market-implied probability, uncertainty, and resolution mechanics.",
+      "Stay neutral on political topics and do not tell the user how to vote or what political outcome to support.",
       sandbox
         ? "This is a Panta sandbox fixture. Explicitly say there is no real-world market to research and use it only to demonstrate the workflow."
         : "Treat the market question as live and time-sensitive.",
+      !hasTextMetadata && imageUrl
+        ? "Panta returned blank title/description. Inspect the attached market image and extract the exact market question only if it is clearly visible. If the image is ambiguous, say the market metadata is insufficient and do not guess."
+        : "",
       "Return concise markdown using exactly these headings:",
       "## Market read",
       "## Evidence",
@@ -70,7 +82,19 @@ export async function POST(req: NextRequest) {
       "Keep the brief under 700 words.",
       "",
       JSON.stringify(market, null, 2),
-    ].join("\n");
+    ].filter(Boolean).join("\n");
+
+    const inputContent: Array<Record<string, unknown>> = [
+      {type: "input_text", text: prompt},
+    ];
+
+    if (!sandbox && imageUrl) {
+      inputContent.push({
+        type: "input_image",
+        image_url: imageUrl,
+        detail: "auto",
+      });
+    }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -80,7 +104,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL ?? "gpt-5.6",
-        input: prompt,
+        input: [{role: "user", content: inputContent}],
         tools: sandbox ? [] : [{type: "web_search"}],
         reasoning: {effort: "low"},
         max_output_tokens: 1400,
@@ -102,6 +126,7 @@ export async function POST(req: NextRequest) {
       sources: result.sources,
       model: process.env.OPENAI_MODEL ?? "gpt-5.6",
       sandbox,
+      usedImage: Boolean(!sandbox && imageUrl),
     });
   } catch (error) {
     return NextResponse.json(
