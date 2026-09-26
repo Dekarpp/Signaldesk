@@ -118,8 +118,11 @@ export function CurrentQuotesChart({
 
       <div className="terminalStats">
         <div>
-          <span>Money traded</span>
-          <strong>{money(market.volume)}</strong>
+          <span>Reported volume</span>
+          <strong>{market.volumeAvailable ? money(market.volume) : "—"}</strong>
+          <small className="reportedDataHint">
+            {market.volumeAvailable ? "Panta-reported" : "Not provided by Panta"}
+          </small>
         </div>
         <div>
           <span>Time left</span>
