@@ -27,9 +27,10 @@ export function scoreMarket(
   market: PantaMarket,
   nowSec = Date.now() / 1000,
 ): SignalMarket {
-  const activeVolume = Number(market.volumeUsdc ?? 0) || 0;
-  const totalVolume = Number(market.totalVolumeUsdc ?? 0) || 0;
-  const volume = Math.max(activeVolume, totalVolume);
+  const activeVolume = toNumber(market.volumeUsdc);
+  const totalVolume = toNumber(market.totalVolumeUsdc);
+  const volumeAvailable = activeVolume != null || totalVolume != null;
+  const volume = Math.max(activeVolume ?? 0, totalVolume ?? 0);
   const yes = toNumber(
     market.yesPrice ?? market.primaryYesPrice ?? market.secondaryYesPrice,
   );
@@ -37,7 +38,9 @@ export function scoreMarket(
     market.noPrice ?? market.primaryNoPrice ?? market.secondaryNoPrice,
   );
 
-  const liquidityScore = clamp(Math.log10(volume + 1) * 22);
+  const liquidityScore = volumeAvailable
+    ? clamp(Math.log10(volume + 1) * 22)
+    : 35;
   const disagreementScore =
     yes == null ? 35 : clamp(100 - Math.abs(yes - 0.5) * 200);
 
@@ -77,6 +80,7 @@ export function scoreMarket(
   return {
     ...market,
     volume,
+    volumeAvailable,
     yes,
     no,
     liquidityScore,
