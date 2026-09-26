@@ -648,6 +648,26 @@ export default function Dashboard() {
       (activity?.tradeCount ?? 0) > 0
     );
 
+  const sourceSites = Object.values(
+    sources.reduce<Record<string, {domain: string; url: string; title: string; pages: number}>>(
+      (acc, source) => {
+        const domain = sourceDomain(source.url);
+        if (!acc[domain]) {
+          acc[domain] = {
+            domain,
+            url: source.url,
+            title: source.title,
+            pages: 1,
+          };
+        } else {
+          acc[domain].pages += 1;
+        }
+        return acc;
+      },
+      {},
+    ),
+  );
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -951,20 +971,30 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {!!sources.length && (
+              {!!sourceSites.length && (
                 <details className="detailsCard sourcesDetails">
-                  <summary>{sources.length} source{sources.length === 1 ? "" : "s"} checked</summary>
+                  <summary>
+                    {sourceSites.length} source site{sourceSites.length === 1 ? "" : "s"} checked
+                    {sources.length > sourceSites.length
+                      ? " · " + sources.length + " pages"
+                      : ""}
+                  </summary>
                   <div className="sourceChips">
-                    {sources.map((source, index) => (
+                    {sourceSites.map((site, index) => (
                       <a
-                        href={source.url}
+                        href={site.url}
                         target="_blank"
                         rel="noreferrer"
-                        key={source.url}
-                        title={source.title}
+                        key={site.domain}
+                        title={
+                          site.pages > 1
+                            ? site.pages + " pages checked on " + site.domain
+                            : site.title
+                        }
                       >
                         <span>{index + 1}</span>
-                        {sourceDomain(source.url)}
+                        {site.domain}
+                        {site.pages > 1 && <small>{site.pages} pages</small>}
                       </a>
                     ))}
                   </div>
