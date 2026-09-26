@@ -363,12 +363,9 @@ export default function Dashboard() {
           (market.daysToClose ?? -1) >= 0
         ) &&
         (
-          market.phase === "resolved" ||
-          market.phase === "cancelled" ||
-          (
-            (market.daysToClose ?? 1) < 0 &&
-            (market.daysToClose ?? -31) >= -30
-          )
+          market.daysToClose == null
+            ? market.phase === "resolved" || market.phase === "cancelled"
+            : market.daysToClose < 0 && market.daysToClose >= -30
         ),
     )
     .sort(
@@ -1142,8 +1139,12 @@ function MarketCard({
         <p className="marketDescription">{marketDescription(market)}</p>
       )}
 
-      <div className="probabilityBar" aria-label="Market-implied probability">
-        <div style={{width: String(Math.round((market.yes ?? 0.5) * 100)) + "%"}} />
+      <div
+        className={"probabilityBar " + (market.yes == null ? "noPrice" : "")}
+        aria-label={market.yes == null ? "No live market price" : "Market-implied probability"}
+      >
+        <div style={{width: market.yes == null ? "0%" : String(Math.round(market.yes * 100)) + "%"}} />
+        {market.yes == null && <span>No live price</span>}
       </div>
 
       <div className="simpleStats">
