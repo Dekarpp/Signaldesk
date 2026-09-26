@@ -36,10 +36,11 @@ SignalDesk does not auto-trade and does not present the evidence lens as a guara
 
 The product has completed the pre-video UX pass:
 
-- current markets are shown by default; ended markets are behind **Show past**
+- the dashboard is organized into **Current markets**, **Recently closed**, and a collapsible **All Panta markets** catalog
 - default selection prefers a current, research-ready, non-political market
 - incomplete Panta metadata is shown honestly instead of invented
 - blank market titles fall back to useful category / oracle-source labels
+- Panta-provided market images are used when available; category-based SignalDesk covers fill image gaps without pretending to be source imagery
 - Market Snapshot includes:
   - YES gauge
   - YES/NO balance
@@ -223,7 +224,7 @@ Avoid demonstrating a successful quote/build unless a compatible live primary ma
 
 ## Freeze rule
 
-The product is now in **video-ready freeze**.
+The product is now in **launch/video freeze**.
 
 Do not add major features before recording unless:
 - a concrete bug is found
