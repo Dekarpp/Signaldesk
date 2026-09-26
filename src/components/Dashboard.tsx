@@ -108,29 +108,35 @@ const usd = (n: number) =>
 const pct = (n: number | null) =>
   n == null ? "—" : Math.round(n * 100) + "%";
 
+const oracleSourceNames = (oracle?: string) =>
+  String(oracle ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const raw = item.split("-").at(-1) ?? item;
+      if (raw.toLowerCase() === "premiumtimes") return "Premium Times";
+      return raw.replace(/\b\w/g, (c) => c.toUpperCase());
+    });
+
 const marketLabel = (market: SignalMarket) => {
   const title = market.title?.trim();
   if (title) return title;
-  const category = (market.category ?? "market").replace(/\b\w/g, (c) => c.toUpperCase());
-  const sourceNames = String(market.oracle ?? "")
-    .split(",")
-    .map((item) => item.trim().split("-").at(-1))
-    .filter(Boolean)
-    .slice(0, 3)
-    .map((item) => String(item).replace(/\b\w/g, (c) => c.toUpperCase()));
-
-  if (sourceNames.length) {
-    return category + " market · " + sourceNames.join(" / ");
-  }
-
-  return category + " market · " + market.marketId.slice(0, 7) + "…" + market.marketId.slice(-5);
+  return "Market question unavailable";
 };
 
 const marketDescription = (market: SignalMarket) => {
   const description = market.description?.trim();
   if (description) return description;
-  if (market.oracle) return "Panta did not send a text question. Oracle: " + market.oracle;
-  return "Panta did not send a text question for this market.";
+
+  const sources = oracleSourceNames(market.oracle);
+  if (sources.length) {
+    return "Panta has not provided readable question text yet. Sources: " +
+      sources.slice(0, 4).join(", ") +
+      ".";
+  }
+
+  return "Panta has not provided readable question text for this market yet.";
 };
 
 const marketResearchReady = (market: SignalMarket) =>
@@ -138,8 +144,20 @@ const marketResearchReady = (market: SignalMarket) =>
   Boolean(market.description?.trim()) ||
   Boolean(market.images?.[0]);
 
-const politicalMarket = (market: SignalMarket) =>
-  String(market.category ?? "").toLowerCase().includes("politic");
+const politicalMarket = (market: SignalMarket) => {
+  const text = [
+    market.category,
+    market.title,
+    market.description,
+    market.question,
+    market.oracle,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return /\b(politic|election|electoral|candidate|president|prime minister|parliament|congress|senate|senator|governor|mayor|referendum|ballot|democrat|republican|labour|conservative|party leader|cabinet|government vote)\b/.test(text);
+};
 
 const daysLabel = (days: number | null) => {
   if (days == null) return "No deadline";
