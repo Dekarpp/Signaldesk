@@ -70,24 +70,41 @@ const getCachedMarkets = unstable_cache(
     const nowSec = Date.now() / 1000;
     const page = await listMarkets(120);
 
-    const active = [...page.items]
-      .map(normalizeMarket)
-      .filter((market) => market.phase === "primary" || market.phase === "secondary")
+    const catalog = [...page.items].map(normalizeMarket);
+
+    // Keep the full Panta catalog visible, but only spend extra upstream calls
+    // enriching the most useful rows for the primary user experience.
+    const detailTargets = [...catalog]
       .sort((a, b) => {
-        const freshnessDelta =
-          Number(isCurrentOrUpcoming(b, nowSec)) -
-          Number(isCurrentOrUpcoming(a, nowSec));
+        const currentA =
+          (a.phase === "primary" || a.phase === "secondary") &&
+          isCurrentOrUpcoming(a, nowSec);
+        const currentB =
+          (b.phase === "primary" || b.phase === "secondary") &&
+          isCurrentOrUpcoming(b, nowSec);
 
-        if (freshnessDelta !== 0) return freshnessDelta;
+        if (currentA !== currentB) return Number(currentB) - Number(currentA);
 
-        const volumeA = Number(a.volumeUsdc ?? a.totalVolumeUsdc ?? 0) || 0;
-        const volumeB = Number(b.volumeUsdc ?? b.totalVolumeUsdc ?? 0) || 0;
-        return volumeB - volumeA;
+        const endA =
+          toEpochSeconds(a.endTime) ??
+          toEpochSeconds(a.resolutionTime) ??
+          0;
+        const endB =
+          toEpochSeconds(b.endTime) ??
+          toEpochSeconds(b.resolutionTime) ??
+          0;
+
+        const readableDelta =
+          Number(Boolean(b.title?.trim())) -
+          Number(Boolean(a.title?.trim()));
+        if (readableDelta !== 0) return readableDelta;
+
+        return endB - endA;
       })
       .slice(0, 16);
 
     const detailed = await Promise.all(
-      active.map(async (market) => {
+      detailTargets.map(async (market) => {
         try {
           return mergeMarket(market, await getMarket(market.marketId));
         } catch {
@@ -96,14 +113,31 @@ const getCachedMarkets = unstable_cache(
       }),
     );
 
-    const markets = detailed
+    const detailById = new Map(
+      detailed.map((market) => [market.marketId, market]),
+    );
+
+    const markets = catalog
+      .map((market) => detailById.get(market.marketId) ?? market)
       .map((market) => scoreMarket(market, nowSec))
       .sort((a, b) => {
-        const freshnessDelta =
-          Number((b.daysToClose ?? 0) >= 0) -
-          Number((a.daysToClose ?? 0) >= 0);
+        const currentA =
+          (a.phase === "primary" || a.phase === "secondary") &&
+          (a.daysToClose ?? -1) >= 0;
+        const currentB =
+          (b.phase === "primary" || b.phase === "secondary") &&
+          (b.daysToClose ?? -1) >= 0;
 
-        if (freshnessDelta !== 0) return freshnessDelta;
+        if (currentA !== currentB) return Number(currentB) - Number(currentA);
+
+        const recentA = a.daysToClose != null && a.daysToClose < 0
+          ? a.daysToClose
+          : Number.NEGATIVE_INFINITY;
+        const recentB = b.daysToClose != null && b.daysToClose < 0
+          ? b.daysToClose
+          : Number.NEGATIVE_INFINITY;
+
+        if (!currentA && recentA !== recentB) return recentB - recentA;
         return b.signalScore - a.signalScore;
       });
 
@@ -127,7 +161,16 @@ const getCachedMarkets = unstable_cache(
       dataQuality: {
         catalogItemsFetched: page.items.length,
         catalogPagesFetched: page.pagesFetched ?? 1,
-        currentOrUpcoming: markets.filter((market) => (market.daysToClose ?? 0) >= 0).length,
+        currentOrUpcoming: markets.filter(
+          (market) =>
+            (market.phase === "primary" || market.phase === "secondary") &&
+            (market.daysToClose ?? -1) >= 0,
+        ).length,
+        recentlyClosed: markets.filter(
+          (market) =>
+            (market.daysToClose ?? 1) < 0 &&
+            (market.daysToClose ?? -31) >= -30,
+        ).length,
         withReadableTitle: markets.filter((market) => Boolean(market.title?.trim())).length,
         executionReady: markets.filter(
           (market) =>
@@ -138,7 +181,7 @@ const getCachedMarkets = unstable_cache(
       },
     };
   },
-  ["signaldesk-panta-markets"],
+  ["signaldesk-panta-markets-v2"],
   {revalidate: 30},
 );
 
