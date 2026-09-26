@@ -2698,3 +2698,580 @@ h1 {
   letter-spacing: .04em;
   text-transform: uppercase;
 }
+
+
+/* Premium terminal charts */
+.snapshotTerminal {
+  background:
+    linear-gradient(145deg, rgba(185,255,102,.035), transparent 42%),
+    #0a0f14;
+}
+
+.terminalChart {
+  border: 1px solid #26313b;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.018), rgba(255,255,255,.004)),
+    #0b1117;
+  padding: 15px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+}
+
+.terminalChartHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.terminalChartHead h3 {
+  margin: 4px 0 0;
+  color: #eef4f8;
+  font-size: 17px;
+  letter-spacing: -.02em;
+}
+
+.terminalEyebrow {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.livePricePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #37404a;
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+
+.livePricePill i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6f7885;
+}
+
+.livePricePill.isLive {
+  border-color: #35552f;
+  color: var(--accent);
+  background: rgba(185,255,102,.035);
+}
+
+.livePricePill.isLive i {
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(185,255,102,.52);
+}
+
+.quoteCards {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 34px minmax(0,1fr);
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 14px;
+}
+
+.quoteSide {
+  min-width: 0;
+  border: 1px solid #27323d;
+  border-radius: 14px;
+  padding: 13px;
+  background:
+    radial-gradient(circle at 80% 15%, rgba(185,255,102,.055), transparent 35%),
+    rgba(255,255,255,.012);
+}
+
+.quoteNo {
+  background:
+    radial-gradient(circle at 80% 15%, rgba(226,181,109,.045), transparent 35%),
+    rgba(255,255,255,.012);
+}
+
+.quoteSideHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quoteSideHead > span {
+  color: #cfd8e2;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.quoteSide > strong {
+  display: block;
+  margin-top: 9px;
+  color: #f5f8fb;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.quoteSide > small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.quoteUp,
+.quoteDown {
+  font-weight: 800;
+}
+
+.quoteUp {
+  color: var(--accent);
+}
+
+.quoteDown {
+  color: #e98b8b;
+}
+
+.quoteMiniTrack {
+  overflow: hidden;
+  height: 5px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: #202933;
+}
+
+.quoteMiniTrack > div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6e9f44, var(--accent));
+}
+
+.quoteMiniTrackNo > div {
+  background: linear-gradient(90deg, #776c61, #d8b47b);
+}
+
+.quoteVs {
+  display: grid;
+  place-items: center;
+  color: #65707d;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.quoteBalance {
+  position: relative;
+  overflow: hidden;
+  height: 18px;
+  margin-top: 12px;
+  border: 1px solid #28333d;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(185,255,102,.025), rgba(221,183,119,.025)),
+    #151d24;
+}
+
+.quoteBalanceYes {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6f9e45, var(--accent));
+}
+
+.quoteBalanceMid {
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: 1px;
+  background: rgba(255,255,255,.48);
+}
+
+.quoteBalanceEmpty {
+  display: grid;
+  place-items: center;
+  height: auto;
+  min-height: 38px;
+  padding: 7px 12px;
+  border-style: dashed;
+}
+
+.quoteBalanceMessage {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.terminalStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.terminalStats > div {
+  border: 1px solid #232d37;
+  border-radius: 10px;
+  background: rgba(255,255,255,.01);
+  padding: 9px 10px;
+}
+
+.terminalStats span {
+  display: block;
+  color: #778392;
+  font-size: 8px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.terminalStats strong {
+  display: block;
+  margin-top: 4px;
+  color: #e5ebf1;
+  font-size: 13px;
+}
+
+.terminalVisualGrid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.visualCardWide {
+  grid-column: span 2;
+}
+
+.priceHistoryPanel {
+  min-height: 235px;
+}
+
+.priceHistoryChart {
+  margin-top: 10px;
+}
+
+.priceHistoryMeta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.priceHistoryMeta span {
+  display: block;
+  color: var(--muted);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.priceHistoryMeta strong {
+  display: block;
+  margin-top: 2px;
+  color: #f0f4f8;
+  font-size: 22px;
+}
+
+.priceHistoryMeta small {
+  margin-top: 4px;
+  font-size: 9px;
+}
+
+.priceHistoryChart svg {
+  display: block;
+  width: 100%;
+  height: 145px;
+  margin-top: 2px;
+  overflow: visible;
+}
+
+.terminalGridLine {
+  stroke: #202a34;
+  stroke-width: 1;
+  stroke-dasharray: 4 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.historyArea {
+  fill: rgba(185,255,102,.07);
+}
+
+.historyLine {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.3;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgba(185,255,102,.2));
+}
+
+.historyPoint {
+  fill: #0b1117;
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.priceHistoryLabels {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #6f7b89;
+  font-size: 8px;
+}
+
+.priceHistoryEmpty {
+  position: relative;
+  overflow: hidden;
+  min-height: 150px;
+  margin-top: 10px;
+  border: 1px dashed #28333d;
+  border-radius: 12px;
+  display: grid;
+  place-content: center;
+  gap: 5px;
+  padding: 15px;
+  text-align: center;
+  background: rgba(255,255,255,.006);
+}
+
+.priceHistoryEmpty strong,
+.priceHistoryEmpty span {
+  position: relative;
+  z-index: 2;
+}
+
+.priceHistoryEmpty strong {
+  color: #dbe3eb;
+  font-size: 11px;
+}
+
+.priceHistoryEmpty span {
+  max-width: 330px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.emptyChartGrid {
+  position: absolute;
+  inset: 0;
+  opacity: .45;
+}
+
+.emptyChartGrid i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #1c252e;
+}
+
+.emptyChartGrid i:nth-child(1) { top: 20%; }
+.emptyChartGrid i:nth-child(2) { top: 40%; }
+.emptyChartGrid i:nth-child(3) { top: 60%; }
+.emptyChartGrid i:nth-child(4) { top: 80%; }
+
+.marketEvidenceChart {
+  margin-top: 16px;
+  border: 1px solid #2a3830;
+  border-radius: 14px;
+  padding: 13px;
+  background:
+    radial-gradient(circle at 82% 16%, rgba(185,255,102,.055), transparent 31%),
+    rgba(255,255,255,.01);
+}
+
+.marketEvidenceLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #8d99a7;
+  font-size: 9px;
+}
+
+.marketEvidenceLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.marketEvidenceLegend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legendMarket {
+  background: #8995a4;
+}
+
+.legendEvidence {
+  background: var(--accent);
+  box-shadow: 0 0 9px rgba(185,255,102,.34);
+}
+
+.marketEvidencePlot {
+  position: relative;
+  margin-top: 24px;
+  padding: 28px 0 27px;
+}
+
+.marketEvidenceGrid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.marketEvidenceGrid i {
+  width: 1px;
+  background: #202a31;
+}
+
+.marketEvidenceTrack {
+  position: relative;
+  height: 12px;
+  border: 1px solid #34413a;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(217,181,125,.10) 0%,
+      rgba(255,255,255,.035) 42%,
+      rgba(255,255,255,.035) 58%,
+      rgba(185,255,102,.12) 100%
+    );
+}
+
+.marketEvidenceZone {
+  position: absolute;
+  top: 18px;
+  color: #687583;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.marketEvidenceNo { left: 0; }
+.marketEvidenceBalanced { left: 50%; transform: translateX(-50%); }
+.marketEvidenceYes { right: 0; }
+
+.comparisonPoint {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+
+.comparisonPoint::before {
+  content: "";
+  display: block;
+  width: 13px;
+  height: 13px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #0b1117;
+}
+
+.comparisonPoint b,
+.comparisonPoint small {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.comparisonPoint b {
+  bottom: 19px;
+  color: #e8edf3;
+  font-size: 9px;
+}
+
+.comparisonPoint small {
+  top: 19px;
+  color: var(--muted);
+  font-size: 7px;
+}
+
+.comparisonPointMarket::before {
+  border: 3px solid #9ba5b0;
+}
+
+.comparisonPointEvidence::before {
+  border: 3px solid var(--accent);
+  box-shadow: 0 0 0 3px rgba(185,255,102,.07), 0 0 13px rgba(185,255,102,.22);
+}
+
+.marketEvidenceAxis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  color: #586573;
+  font-size: 7px;
+}
+
+.marketEvidenceFoot {
+  margin: 12px 0 0;
+  color: #798593;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.neutralEvidenceState {
+  margin-top: 12px;
+  border: 1px dashed #38414b;
+  border-radius: 10px;
+  padding: 11px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+  .terminalStats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .terminalVisualGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .visualCardWide {
+    grid-column: auto;
+  }
+
+  .priceHistoryPanel {
+    min-height: 210px;
+  }
+}
+
+@media (max-width: 520px) {
+  .quoteCards {
+    grid-template-columns: 1fr 26px 1fr;
+    gap: 6px;
+  }
+
+  .quoteSide {
+    padding: 11px;
+  }
+
+  .quoteSide > strong {
+    font-size: 26px;
+  }
+
+  .terminalChart {
+    padding: 12px;
+  }
+
+  .terminalChartHead h3 {
+    font-size: 15px;
+  }
+
+  .priceHistoryChart svg {
+    height: 120px;
+  }
+
+  .marketEvidencePlot {
+    margin-top: 28px;
+  }
+}
