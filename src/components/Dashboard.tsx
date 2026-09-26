@@ -16,6 +16,17 @@ type MarketsResponse = {
   mode: "test" | "live";
   sandbox: boolean;
   categories: string[];
+  dataQuality?: {
+    catalogItemsFetched: number;
+    catalogPagesFetched: number;
+    currentOrUpcoming: number;
+    recentlyClosed: number;
+    withReadableTitle: number;
+    withReportedVolume: number;
+    reportedVolumeUsdc: number;
+    volumeCoveragePct: number;
+    executionReady: number;
+  };
   error?: string;
 };
 
@@ -340,7 +351,12 @@ export default function Dashboard() {
     });
 
     items.sort((a, b) => {
-      if (sort === "volume") return b.volume - a.volume;
+      if (sort === "volume") {
+        const availableDelta =
+          Number(b.volumeAvailable) - Number(a.volumeAvailable);
+        if (availableDelta !== 0) return availableDelta;
+        return b.volume - a.volume;
+      }
       if (sort === "deadline") {
         return (a.daysToClose ?? Number.MAX_SAFE_INTEGER) -
           (b.daysToClose ?? Number.MAX_SAFE_INTEGER);
@@ -359,11 +375,6 @@ export default function Dashboard() {
 
     return items;
   }, [data, query, category, phase, sort, watchlist, watchlistOnly]);
-
-  const totalVolume = useMemo(
-    () => data?.markets.reduce((sum, market) => sum + market.volume, 0) ?? 0,
-    [data],
-  );
 
   const currentMarketCount =
     data?.markets.filter(
@@ -671,7 +682,18 @@ export default function Dashboard() {
         <div className="heroCard metrics">
           <Metric value={String(currentMarketCount)} label="current" />
           <Metric value={String(data?.markets.length ?? 0)} label="catalog" />
-          <Metric value={usd(totalVolume)} label="money traded" />
+          <Metric
+            value={
+              (data?.dataQuality?.withReportedVolume ?? 0) > 0
+                ? usd(data?.dataQuality?.reportedVolumeUsdc ?? 0)
+                : "—"
+            }
+            label={
+              "reported volume · " +
+              String(data?.dataQuality?.volumeCoveragePct ?? 0) +
+              "% coverage"
+            }
+          />
           <Metric value={highestPriority == null ? "—" : highestPriority.toFixed(0)} label="highest priority" />
         </div>
       </section>
@@ -1179,7 +1201,7 @@ function MarketCard({
 
       <div className="cardFooter">
         <span>{market.attentionReason}</span>
-        <span>{usd(market.volume)} traded</span>
+        <span>{market.volumeAvailable ? usd(market.volume) + " reported" : "Volume unavailable"}</span>
       </div>
 
       {typeof priceDelta === "number" && Math.abs(priceDelta) >= 0.0001 && (
@@ -1211,7 +1233,7 @@ function CompactMarketRow({
       <div className="compactMarketStats">
         <span>YES <b>{pct(market.yes)}</b></span>
         <span>{daysLabel(market.daysToClose)}</span>
-        <span>{usd(market.volume)}</span>
+        <span>{market.volumeAvailable ? usd(market.volume) : "Volume —"}</span>
       </div>
     </button>
   );
