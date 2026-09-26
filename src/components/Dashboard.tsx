@@ -3,6 +3,11 @@
 import {useEffect, useMemo, useState} from "react";
 import type {SignalMarket} from "@/lib/types";
 import TractionPanel from "@/components/TractionPanel";
+import {
+  CurrentQuotesChart,
+  MarketVsEvidenceChart,
+  PriceHistoryChart,
+} from "@/components/MarketCharts";
 import {trackSession, trackTraction, tractionClientId} from "@/lib/traction-client";
 
 type MarketsResponse = {
@@ -798,6 +803,7 @@ export default function Dashboard() {
                 activity={activity}
                 activityLoading={activityLoading}
                 history={priceHistory[selected.marketId] ?? []}
+                priceDelta={priceDeltas[selected.marketId]}
               />
 
               <div className="controls researchActions">
@@ -1198,89 +1204,28 @@ function MarketSnapshot({
   activity,
   activityLoading,
   history,
+  priceDelta,
 }: {
   market: SignalMarket;
   activity: MarketActivity | null;
   activityLoading: boolean;
   history: PricePoint[];
+  priceDelta?: number;
 }) {
-  const yes = market.yes;
-  const no = market.no;
-  const yesPercent = yes == null ? null : Math.round(yes * 100);
   const totalFlow = (activity?.yesFlow ?? 0) + (activity?.noFlow ?? 0);
   const yesFlowPercent =
     totalFlow > 0 ? Math.round(((activity?.yesFlow ?? 0) / totalFlow) * 100) : null;
 
-  const stance =
-    yesPercent == null
-      ? "No live price"
-      : yesPercent >= 65
-        ? "Market leans YES"
-        : yesPercent <= 35
-          ? "Market leans NO"
-          : "Market is split";
-
   return (
-    <div className="snapshot">
-      <div className="snapshotTop">
-        <div className="probabilityGauge">
-          <svg viewBox="0 0 120 120" role="img" aria-label={"YES probability " + (yesPercent ?? "unknown")}>
-            <circle className="gaugeTrack" cx="60" cy="60" r="48" />
-            <circle
-              className="gaugeValue"
-              cx="60"
-              cy="60"
-              r="48"
-              pathLength="100"
-              strokeDasharray="100"
-              strokeDashoffset={100 - (yesPercent ?? 0)}
-            />
-          </svg>
-          <div className="gaugeCenter">
-            <strong>{yesPercent == null ? "—" : yesPercent + "%"}</strong>
-            <span>YES</span>
-          </div>
-        </div>
+    <div className="snapshot snapshotTerminal">
+      <CurrentQuotesChart
+        market={market}
+        activity={activity}
+        activityLoading={activityLoading}
+        priceDelta={priceDelta}
+      />
 
-        <div className="snapshotSummary">
-          <div className="snapshotEyebrow">Market snapshot</div>
-          <h3>{stance}</h3>
-          <p>
-            {yesPercent == null
-              ? "Panta is not publishing a live YES/NO price for this market yet."
-              : "This is the market price right now — not a prediction from SignalDesk."}
-          </p>
-
-          <div className="balanceBar" aria-label="YES versus NO market balance">
-            <div className="balanceYes" style={{width: (yesPercent ?? 0) + "%"}} />
-          </div>
-          <div className="balanceLabels">
-            <span>YES {pct(yes)}</span>
-            <span>NO {pct(no)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="snapshotMetrics">
-        <div>
-          <span>Money traded</span>
-          <strong>{usd(market.volume)}</strong>
-        </div>
-        <div>
-          <span>Time left</span>
-          <strong>{daysLabel(market.daysToClose)}</strong>
-        </div>
-        <div>
-          <span>Recent trades</span>
-          <strong>{activityLoading ? "…" : String(activity?.tradeCount ?? 0)}</strong>
-        </div>
-        <div>
-          <span>Priority</span>
-          <strong>{market.signalScore.toFixed(0)}</strong>
-        </div>
-      </div>
-
-      <div className="visualGrid">
+      <div className="visualGrid terminalVisualGrid">
         <div className="visualCard">
           <div className="visualHead">
             <div>
@@ -1303,15 +1248,15 @@ function MarketSnapshot({
           <MarketTimeline market={market} />
         </div>
 
-        <div className="visualCard">
+        <div className="visualCard visualCardWide priceHistoryPanel">
           <div className="visualHead">
             <div>
               <span>YES price history</span>
-              <strong>SignalDesk snapshots</strong>
+              <strong>Real observed Panta snapshots</strong>
             </div>
             <small>{history.length} point{history.length === 1 ? "" : "s"}</small>
           </div>
-          <PriceSparkline points={history} />
+          <PriceHistoryChart points={history} />
         </div>
 
         <div className="visualCard">
@@ -1405,60 +1350,6 @@ function shortDate(ms: number) {
   return new Intl.DateTimeFormat("en-US", {month: "short", day: "numeric"}).format(new Date(ms));
 }
 
-function PriceSparkline({points}: {points: PricePoint[]}) {
-  if (points.length < 2) {
-    return (
-      <div className="chartEmpty">
-        Collecting real price snapshots. Refresh later to build the line.
-      </div>
-    );
-  }
-
-  const values = points.map((point) => point.yes);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const spread = Math.max(max - min, 0.02);
-  const width = 320;
-  const height = 110;
-  const pad = 8;
-
-  const coords = points.map((point, index) => {
-    const x =
-      pad +
-      (index / Math.max(points.length - 1, 1)) *
-        (width - pad * 2);
-    const normalized = (point.yes - (min - spread * 0.08)) / (spread * 1.16);
-    const y = height - pad - normalized * (height - pad * 2);
-    return {x, y};
-  });
-
-  const path = coords
-    .map((point, index) => (index === 0 ? "M" : "L") + point.x.toFixed(1) + " " + point.y.toFixed(1))
-    .join(" ");
-
-  return (
-    <div className="sparklineWrap">
-      <svg className="sparkline" viewBox={"0 0 " + width + " " + height} preserveAspectRatio="none">
-        <line x1="0" y1={height / 2} x2={width} y2={height / 2} className="sparkGrid" />
-        <path d={path} className="sparkPath" />
-        {coords.map((point, index) => (
-          <circle
-            key={points[index].at}
-            cx={point.x}
-            cy={point.y}
-            r={index === coords.length - 1 ? 3.5 : 2}
-            className="sparkPoint"
-          />
-        ))}
-      </svg>
-      <div className="sparkMeta">
-        <span>{Math.round(values[0] * 100)}%</span>
-        <strong>{Math.round(values.at(-1)! * 100)}% now</strong>
-      </div>
-    </div>
-  );
-}
-
 function SimpleResearchBrief({
   brief,
   marketYes,
@@ -1543,15 +1434,6 @@ function DecisionLensCard({
             ? "Neutral factual view"
             : "Evidence is unclear";
 
-  const position =
-    decision.signal === "leans_no"
-      ? 12
-      : decision.signal === "leans_yes"
-        ? 88
-        : decision.signal === "balanced"
-          ? 50
-          : 50;
-
   return (
     <div className={"decisionLens decision-" + decision.signal}>
       <div className="decisionLensTop">
@@ -1564,28 +1446,11 @@ function DecisionLensCard({
         </span>
       </div>
 
-      {decision.signal !== "not_assessed" && (
-        <div className="evidenceScale" aria-label={label}>
-          <div className="comparisonLegend">
-            <span><i className="marketDot" /> Market {marketYes == null ? "—" : Math.round(marketYes * 100) + "% YES"}</span>
-            <span><i className="evidenceDot" /> Evidence</span>
-          </div>
-          <div className="evidenceScaleTrack">
-            {marketYes != null && (
-              <span
-                className="marketMarker"
-                style={{left: Math.max(2, Math.min(98, marketYes * 100)) + "%"}}
-              />
-            )}
-            <span className="evidenceMarker" style={{left: position + "%"}} />
-          </div>
-          <div className="evidenceScaleLabels">
-            <span>NO</span>
-            <span>Balanced</span>
-            <span>YES</span>
-          </div>
-        </div>
-      )}
+      <MarketVsEvidenceChart
+        marketYes={marketYes}
+        signal={decision.signal}
+        strength={decision.strength}
+      />
 
       <p>{decision.summary}</p>
       <div className="decisionNote">
