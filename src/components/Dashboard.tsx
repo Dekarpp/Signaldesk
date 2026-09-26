@@ -432,10 +432,19 @@ export default function Dashboard() {
     setActivity(null);
     setQuote(null);
     setBuildPreview(null);
+
+    const fullCatalog =
+      typeof document !== "undefined"
+        ? document.querySelector<HTMLDetailsElement>(".allCatalog")
+        : null;
+    if (fullCatalog) fullCatalog.open = false;
+
     requestAnimationFrame(() => {
-      document.getElementById("research")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
+      requestAnimationFrame(() => {
+        document.getElementById("research")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       });
     });
   }
