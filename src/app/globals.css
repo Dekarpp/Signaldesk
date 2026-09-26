@@ -3286,3 +3286,60 @@ h1 {
   text-transform: none;
   letter-spacing: 0;
 }
+
+
+.dataAvailability {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px dashed #2d3843;
+  border-radius: 13px;
+  padding: 13px 14px;
+  background: rgba(255,255,255,.008);
+}
+
+.dataAvailabilityWide {
+  grid-column: span 2;
+}
+
+.dataAvailability span {
+  display: block;
+  color: #778493;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.dataAvailability strong {
+  display: block;
+  margin-top: 4px;
+  color: #dfe6ed;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.dataAvailability small {
+  max-width: 300px;
+  color: #778493;
+  font-size: 8px;
+  line-height: 1.45;
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .dataAvailability,
+  .dataAvailabilityWide {
+    grid-column: auto;
+  }
+
+  .dataAvailability {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dataAvailability small {
+    max-width: none;
+    text-align: left;
+  }
+}
