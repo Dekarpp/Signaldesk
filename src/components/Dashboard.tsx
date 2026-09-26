@@ -632,7 +632,7 @@ export default function Dashboard() {
         <div className="heroCard">
           <div>
             <div className="eyebrow">Market vs evidence</div>
-            <h1>See what the market thinks — and what the facts say.</h1>
+            <h1>Market signals. Real evidence. Better decisions.</h1>
             <p className="sub heroCopy">
               SignalDesk turns Panta prices into a fast decision-support view:
               market odds, evidence direction, counterevidence, and what could change the picture.
