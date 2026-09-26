@@ -132,10 +132,10 @@ const marketDescription = (market: SignalMarket) => {
   if (description) return description;
 
   if (market.images?.[0]) {
-    return "Question text is unavailable. See the Panta-provided image for the market context.";
+    return "SignalDesk can inspect the Panta-provided image before research.";
   }
 
-  return "Panta has not provided readable question text for this market yet.";
+  return "Panta has not provided readable question text yet.";
 };
 
 const marketResearchReady = (market: SignalMarket) =>
