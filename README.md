@@ -1,8 +1,8 @@
 # SignalDesk
 
-**AI research and execution-prep for prediction markets, powered by Panta.**
+**Market signals. Real evidence. Better decisions.**
 
-SignalDesk turns live Panta markets into a prioritized decision-support workflow. It combines deterministic market scoring, Panta trade/activity data, live web research, a Market-vs-Evidence decision lens, watchlists, wallet-position intelligence, and guarded execution preparation so a user can understand what the market thinks, what the evidence says, and what could change the picture before taking any action.
+SignalDesk turns Panta markets into a visual decision-support workflow. It combines deterministic market scoring, Panta trade/activity data, live web research, a Market-vs-Evidence decision lens, watchlists, wallet-position intelligence, and guarded execution preparation so a user can understand what the market thinks, what the evidence says, and what could change the picture before taking any action.
 
 **Live demo:** https://signaldesk-henna.vercel.app
 
@@ -40,9 +40,11 @@ The product displays the required **Powered by Panta** attribution alongside Pan
 
 ## Product features
 
+- Full Panta catalog browsing with separate **Current markets**, **Recently closed**, and **All Panta markets** sections
+- Panta market imagery when available, with honest SignalDesk visual fallbacks when no image is supplied
 - Live Panta scanner with real market metadata
 - Deterministic research-priority score
-- Search, category, phase, volume/deadline/signal sorting
+- Search, category, status, volume/deadline/usefulness sorting
 - Market images and metadata fallbacks
 - Browser-persistent watchlist
 - Previous-scan probability deltas
@@ -155,7 +157,7 @@ Production is deployed through Vercel Git integration from main.
 
 ## Hackathon
 
-SignalDesk is being prepared for:
+SignalDesk is launch-ready for:
 
 - **Colosseum Crypto World's Fair**
 - **Panta API Sidetrack on Superteam Earn**
