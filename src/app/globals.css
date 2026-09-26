@@ -2485,3 +2485,195 @@ h1 {
     grid-column: 2;
   }
 }
+
+
+/* Full catalog hierarchy */
+.catalogSection {
+  margin-top: 28px;
+}
+
+.catalogSectionHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 13px;
+}
+
+.catalogSectionHead h2 {
+  margin: 4px 0 2px;
+}
+
+.catalogSectionHead .sub {
+  margin: 0;
+  font-size: 12px;
+}
+
+.catalogCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.018);
+  color: #dce4ed;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.compactMarketList {
+  display: grid;
+  gap: 7px;
+}
+
+.compactMarketRow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 9px;
+  background: rgba(255,255,255,.012);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.compactMarketRow:hover {
+  border-color: #445165;
+  background: rgba(255,255,255,.022);
+  transform: translateY(-1px);
+}
+
+.compactMarketMain {
+  min-width: 0;
+}
+
+.compactMarketMain > strong {
+  display: block;
+  margin-top: 5px;
+  color: #e8edf3;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactTags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.compactTags span {
+  color: var(--muted);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.compactMarketStats {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.compactMarketStats b {
+  color: var(--text);
+}
+
+.allCatalog {
+  margin-top: 26px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255,255,255,.008);
+  overflow: hidden;
+}
+
+.allCatalog > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.allCatalog > summary::-webkit-details-marker {
+  display: none;
+}
+
+.allCatalog > summary > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.allCatalog > summary strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.allCatalog > summary > div > span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.allCatalog > summary::after {
+  content: "+";
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.allCatalog[open] > summary::after {
+  content: "−";
+}
+
+.allCatalogList {
+  max-height: 720px;
+  overflow: auto;
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.allCatalogList .compactMarketRow:first-child {
+  margin-top: 12px;
+}
+
+@media (max-width: 700px) {
+  .catalogSectionHead {
+    align-items: flex-start;
+  }
+
+  .compactMarketRow {
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
+
+  .compactMarketStats {
+    grid-column: 2;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .compactMarketMain > strong {
+    white-space: normal;
+  }
+
+  .allCatalog > summary > div > span {
+    display: none;
+  }
+}
