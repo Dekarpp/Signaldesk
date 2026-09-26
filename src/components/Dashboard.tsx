@@ -119,32 +119,20 @@ const usd = (n: number) =>
 const pct = (n: number | null) =>
   n == null ? "—" : Math.round(n * 100) + "%";
 
-const oracleSourceNames = (oracle?: string) =>
-  String(oracle ?? "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .map((item) => {
-      const raw = item.split("-").at(-1) ?? item;
-      if (raw.toLowerCase() === "premiumtimes") return "Premium Times";
-      return raw.replace(/\b\w/g, (c) => c.toUpperCase());
-    });
-
 const marketLabel = (market: SignalMarket) => {
   const title = market.title?.trim();
   if (title) return title;
-  return "Market question unavailable";
+  return market.images?.[0]
+    ? "Question available in Panta image"
+    : "Market question unavailable";
 };
 
 const marketDescription = (market: SignalMarket) => {
   const description = market.description?.trim();
   if (description) return description;
 
-  const sources = oracleSourceNames(market.oracle);
-  if (sources.length) {
-    return "Panta has not provided readable question text yet. Sources: " +
-      sources.slice(0, 4).join(", ") +
-      ".";
+  if (market.images?.[0]) {
+    return "Question text is unavailable. See the Panta-provided image for the market context.";
   }
 
   return "Panta has not provided readable question text for this market yet.";
@@ -912,7 +900,7 @@ export default function Dashboard() {
 
               {!selected.title?.trim() && selected.images?.[0] && (
                 <div className="small mediaNote">
-                  Panta returned the market question as image metadata; SignalDesk can inspect it before research.
+                  This image comes from Panta and may contain the market question or event context.
                 </div>
               )}
 
