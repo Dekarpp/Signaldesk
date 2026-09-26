@@ -410,8 +410,21 @@ export async function POST(req: NextRequest) {
           : null),
     };
 
+    const politicalText = [
+      market?.category,
+      market?.title,
+      market?.question,
+      market?.description,
+      market?.oracle,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
     const politicalMarket =
-      String(market?.category ?? "").toLowerCase().includes("politic");
+      /\b(politic|election|electoral|candidate|president|prime minister|parliament|congress|senate|senator|governor|mayor|referendum|ballot|democrat|republican|labour|conservative|party leader|cabinet|government vote)\b/.test(
+        politicalText,
+      );
 
     const prompt = [
       "You are the research layer of SignalDesk, a prediction-market intelligence product.",
