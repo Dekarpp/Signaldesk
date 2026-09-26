@@ -175,6 +175,7 @@ const getCachedMarkets = unstable_cache(
         executionReady: markets.filter(
           (market) =>
             market.phase === "primary" &&
+            (market.daysToClose ?? -1) >= 0 &&
             market.yes != null &&
             market.no != null,
         ).length,
