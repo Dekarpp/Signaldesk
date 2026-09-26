@@ -788,14 +788,11 @@ export default function Dashboard() {
                 {marketDescription(selected)}
               </p>
 
+              <MarketVisual market={selected} variant="hero" />
+
               {!selected.title?.trim() && selected.images?.[0] && (
-                <div className="researchImage">
-                  <img src={selected.images[0]} alt="" />
-                  {!selected.title?.trim() && (
-                    <div className="small">
-                      Panta returned blank text metadata. The research agent can inspect this market image before searching the web.
-                    </div>
-                  )}
+                <div className="small mediaNote">
+                  Panta returned the market question as image metadata; SignalDesk can inspect it before research.
                 </div>
               )}
 
@@ -1045,6 +1042,68 @@ export default function Dashboard() {
   );
 }
 
+function MarketVisual({
+  market,
+  variant,
+}: {
+  market: SignalMarket;
+  variant: "card" | "thumb" | "hero";
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = market.images?.[0];
+  const category = String(market.category ?? "market").toLowerCase();
+  const label = marketLabel(market);
+
+  const categoryMark =
+    category.includes("gaming")
+      ? "GAME"
+      : category.includes("weather")
+        ? "WX"
+        : category.includes("politic")
+          ? "CIVIC"
+          : category.includes("crypto")
+            ? "CRYPTO"
+            : category.includes("stock")
+              ? "MARKET"
+              : category.includes("finance")
+                ? "FIN"
+                : category.includes("commod")
+                  ? "METALS"
+                  : category.includes("sport")
+                    ? "SPORT"
+                    : category.includes("business")
+                      ? "BIZ"
+                      : category.includes("world")
+                        ? "WORLD"
+                        : "PANTA";
+
+  return (
+    <div className={"marketVisual marketVisual-" + variant + " visual-" + category.replace(/[^a-z0-9_-]/g, "-")}>
+      {image && !imageFailed ? (
+        <img
+          src={image}
+          alt={label}
+          loading={variant === "hero" ? "eager" : "lazy"}
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <div className="marketVisualFallback" aria-label={category + " market visual"}>
+          <span>{categoryMark}</span>
+          <i />
+          <i />
+          <i />
+        </div>
+      )}
+      {variant !== "thumb" && (
+        <div className="marketVisualShade">
+          <span>{market.category ?? "Panta market"}</span>
+          {image && !imageFailed ? <small>Image from Panta</small> : <small>SignalDesk visual</small>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MarketCard({
   market,
   selectedId,
@@ -1063,6 +1122,7 @@ function MarketCard({
       className={"marketCard " + (selectedId === market.marketId ? "selected" : "")}
       onClick={() => onSelect(market)}
     >
+      <MarketVisual market={market} variant="card" />
       <div className="cardTop simpleCardTop">
         <div className="cardTags">
           <span className="categoryTag">{market.category ?? "market"}</span>
@@ -1115,6 +1175,7 @@ function CompactMarketRow({
 }) {
   return (
     <button className="compactMarketRow" onClick={() => onSelect(market)}>
+      <MarketVisual market={market} variant="thumb" />
       <div className="compactMarketMain">
         <div className="compactTags">
           <span>{market.category ?? "market"}</span>
