@@ -31,6 +31,7 @@ export type SignalMarket = PantaMarket & {
   disagreementScore: number;
   timingScore: number;
   volume: number;
+  volumeAvailable: boolean;
   yes: number | null;
   no: number | null;
   daysToClose: number | null;
