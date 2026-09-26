@@ -172,6 +172,15 @@ const getCachedMarkets = unstable_cache(
             (market.daysToClose ?? -31) >= -30,
         ).length,
         withReadableTitle: markets.filter((market) => Boolean(market.title?.trim())).length,
+        withReportedVolume: markets.filter((market) => market.volumeAvailable).length,
+        reportedVolumeUsdc: markets
+          .filter((market) => market.volumeAvailable)
+          .reduce((sum, market) => sum + market.volume, 0),
+        volumeCoveragePct: markets.length
+          ? Math.round(
+              (markets.filter((market) => market.volumeAvailable).length / markets.length) * 100,
+            )
+          : 0,
         executionReady: markets.filter(
           (market) =>
             market.phase === "primary" &&
@@ -182,7 +191,7 @@ const getCachedMarkets = unstable_cache(
       },
     };
   },
-  ["signaldesk-panta-markets-v2"],
+  ["signaldesk-panta-markets-v3"],
   {revalidate: 30},
 );
 
