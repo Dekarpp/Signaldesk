@@ -169,7 +169,6 @@ export default function Dashboard() {
   const [priceHistory, setPriceHistory] = useState<Record<string, PricePoint[]>>({});
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const [watchlistOnly, setWatchlistOnly] = useState(false);
-  const [showPast, setShowPast] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [phase, setPhase] = useState("all");
@@ -314,8 +313,7 @@ export default function Dashboard() {
       const matchesCategory = category === "all" || market.category === category;
       const matchesPhase = phase === "all" || market.phase === phase;
       const matchesWatchlist = !watchlistOnly || watchlist.includes(market.marketId);
-      const matchesTime = showPast || (market.daysToClose ?? -1) >= 0;
-      return matchesSearch && matchesCategory && matchesPhase && matchesWatchlist && matchesTime;
+      return matchesSearch && matchesCategory && matchesPhase && matchesWatchlist;
     });
 
     items.sort((a, b) => {
@@ -337,7 +335,7 @@ export default function Dashboard() {
     });
 
     return items;
-  }, [data, query, category, phase, sort, watchlist, watchlistOnly, showPast]);
+  }, [data, query, category, phase, sort, watchlist, watchlistOnly]);
 
   const totalVolume = useMemo(
     () => data?.markets.reduce((sum, market) => sum + market.volume, 0) ?? 0,
@@ -345,7 +343,46 @@ export default function Dashboard() {
   );
 
   const currentMarketCount =
-    data?.markets.filter((market) => (market.daysToClose ?? -1) >= 0).length ?? 0;
+    data?.markets.filter(
+      (market) =>
+        (market.phase === "primary" || market.phase === "secondary") &&
+        (market.daysToClose ?? -1) >= 0,
+    ).length ?? 0;
+
+  const currentFiltered = filtered.filter(
+    (market) =>
+      (market.phase === "primary" || market.phase === "secondary") &&
+      (market.daysToClose ?? -1) >= 0,
+  );
+
+  const recentlyClosedFiltered = filtered
+    .filter(
+      (market) =>
+        !(
+          (market.phase === "primary" || market.phase === "secondary") &&
+          (market.daysToClose ?? -1) >= 0
+        ) &&
+        (
+          market.phase === "resolved" ||
+          market.phase === "cancelled" ||
+          (
+            (market.daysToClose ?? 1) < 0 &&
+            (market.daysToClose ?? -31) >= -30
+          )
+        ),
+    )
+    .sort(
+      (a, b) =>
+        (b.daysToClose ?? Number.NEGATIVE_INFINITY) -
+        (a.daysToClose ?? Number.NEGATIVE_INFINITY),
+    );
+
+  const phaseValues = useMemo(
+    () =>
+      [...new Set((data?.markets ?? []).map((market) => market.phase).filter(Boolean))]
+        .sort(),
+    [data],
+  );
 
   const highestPriority =
     data?.markets.length
@@ -635,13 +672,6 @@ export default function Dashboard() {
             >
               ★ Watchlist · {watchlist.length}
             </button>
-            <button
-              className={"btn " + (showPast ? "watching" : "")}
-              onClick={() => setShowPast((value) => !value)}
-              aria-pressed={showPast}
-            >
-              {showPast ? "Hide past" : "Show past"}
-            </button>
           </div>
         </div>
         <div className="filterGrid">
@@ -656,9 +686,10 @@ export default function Dashboard() {
             {(data?.categories ?? []).map((item) => <option value={item} key={item}>{item}</option>)}
           </select>
           <select className="select" value={phase} onChange={(event) => setPhase(event.target.value)}>
-            <option value="all">All phases</option>
-            <option value="primary">Primary</option>
-            <option value="secondary">Secondary</option>
+            <option value="all">All statuses</option>
+            {phaseValues.map((item) => (
+              <option value={item} key={item}>{item}</option>
+            ))}
           </select>
           <select className="select" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
             <option value="signal">Sort: useful now</option>
@@ -668,63 +699,84 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <section className="marketGrid">
-        {filtered.map((market) => (
-          <button
-            className={"marketCard " + (selected?.marketId === market.marketId ? "selected" : "")}
-            key={market.marketId}
-            onClick={() => chooseMarket(market)}
-          >
-            <div className="cardTop simpleCardTop">
-              <div className="cardTags">
-                <span className="categoryTag">{market.category ?? "market"}</span>
-                <span className="phase">{market.phase}</span>
-                {watchlist.includes(market.marketId) && (
-                  <span className="watchFlag">★ saved</span>
-                )}
-              </div>
-              <div className="priorityBadge">
-                <span>Priority</span>
-                <strong>{market.signalScore.toFixed(0)}</strong>
-              </div>
-            </div>
-
-            <div className="marketTitle">{marketLabel(market)}</div>
-            {market.description?.trim() && market.description.trim() !== market.title?.trim() && (
-              <p className="marketDescription">{marketDescription(market)}</p>
-            )}
-
-            <div className="probabilityBar" aria-label="Market-implied probability">
-              <div style={{width: String(Math.round((market.yes ?? 0.5) * 100)) + "%"}} />
-            </div>
-
-            <div className="simpleStats">
-              <div><span>YES</span><strong>{pct(market.yes)}</strong></div>
-              <div><span>NO</span><strong>{pct(market.no)}</strong></div>
-              <div><span>Closes</span><strong>{daysLabel(market.daysToClose)}</strong></div>
-            </div>
-
-            <div className="cardFooter">
-              <span>{market.attentionReason}</span>
-              <span>{usd(market.volume)} traded</span>
-            </div>
-
-            {typeof priceDeltas[market.marketId] === "number" && Math.abs(priceDeltas[market.marketId]) >= 0.0001 && (
-              <div className={priceDeltas[market.marketId] > 0 ? "deltaUp simpleDelta" : "deltaDown simpleDelta"}>
-                YES {priceDeltas[market.marketId] > 0 ? "+" : ""}{(priceDeltas[market.marketId] * 100).toFixed(1)} pts since last scan
-              </div>
-            )}
-          </button>
-        ))}
-
-        {!loading && !filtered.length && (
-          <div className="empty cardEmpty">
-            {watchlistOnly
-              ? "No watched markets are in the current live scan."
-              : "No markets match the current filters."}
+      <section className="catalogSection">
+        <div className="catalogSectionHead">
+          <div>
+            <div className="eyebrow">Live now</div>
+            <h2>Current markets</h2>
+            <p className="sub">Open Panta markets that can still change.</p>
           </div>
-        )}
+          <span className="catalogCount">{currentFiltered.length}</span>
+        </div>
+
+        <div className="marketGrid">
+          {currentFiltered.map((market) => (
+            <MarketCard
+              key={market.marketId}
+              market={market}
+              selectedId={selected?.marketId ?? null}
+              watchlist={watchlist}
+              priceDelta={priceDeltas[market.marketId]}
+              onSelect={chooseMarket}
+            />
+          ))}
+
+          {!loading && !currentFiltered.length && (
+            <div className="empty cardEmpty">
+              {watchlistOnly
+                ? "No current watched markets match these filters."
+                : "No current markets match these filters."}
+            </div>
+          )}
+        </div>
       </section>
+
+      {!!recentlyClosedFiltered.length && (
+        <section className="catalogSection">
+          <div className="catalogSectionHead">
+            <div>
+              <div className="eyebrow">Recent outcomes</div>
+              <h2>Recently closed</h2>
+              <p className="sub">Useful for reviewing how markets resolved and how SignalDesk reads completed events.</p>
+            </div>
+            <span className="catalogCount">{recentlyClosedFiltered.length}</span>
+          </div>
+
+          <div className="compactMarketList">
+            {recentlyClosedFiltered.slice(0, 8).map((market) => (
+              <CompactMarketRow
+                key={market.marketId}
+                market={market}
+                onSelect={chooseMarket}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <details className="allCatalog">
+        <summary>
+          <div>
+            <div className="eyebrow">Full Panta catalog</div>
+            <strong>All Panta markets</strong>
+            <span>Browse every catalog row returned by the API, including older and incomplete markets.</span>
+          </div>
+          <span className="catalogCount">{filtered.length}</span>
+        </summary>
+
+        <div className="compactMarketList allCatalogList">
+          {filtered.map((market) => (
+            <CompactMarketRow
+              key={market.marketId}
+              market={market}
+              onSelect={chooseMarket}
+            />
+          ))}
+          {!loading && !filtered.length && (
+            <div className="empty">No Panta markets match these filters.</div>
+          )}
+        </div>
+      </details>
 
       {selected && (
         <section className="drawer" id="research">
@@ -990,6 +1042,92 @@ export default function Dashboard() {
         Research scores prioritize attention; they are not expected-return estimates or financial advice.
       </footer>
     </main>
+  );
+}
+
+function MarketCard({
+  market,
+  selectedId,
+  watchlist,
+  priceDelta,
+  onSelect,
+}: {
+  market: SignalMarket;
+  selectedId: string | null;
+  watchlist: string[];
+  priceDelta?: number;
+  onSelect: (market: SignalMarket) => void;
+}) {
+  return (
+    <button
+      className={"marketCard " + (selectedId === market.marketId ? "selected" : "")}
+      onClick={() => onSelect(market)}
+    >
+      <div className="cardTop simpleCardTop">
+        <div className="cardTags">
+          <span className="categoryTag">{market.category ?? "market"}</span>
+          <span className="phase">{market.phase}</span>
+          {watchlist.includes(market.marketId) && (
+            <span className="watchFlag">★ saved</span>
+          )}
+        </div>
+        <div className="priorityBadge">
+          <span>Priority</span>
+          <strong>{market.signalScore.toFixed(0)}</strong>
+        </div>
+      </div>
+
+      <div className="marketTitle">{marketLabel(market)}</div>
+      {market.description?.trim() && market.description.trim() !== market.title?.trim() && (
+        <p className="marketDescription">{marketDescription(market)}</p>
+      )}
+
+      <div className="probabilityBar" aria-label="Market-implied probability">
+        <div style={{width: String(Math.round((market.yes ?? 0.5) * 100)) + "%"}} />
+      </div>
+
+      <div className="simpleStats">
+        <div><span>YES</span><strong>{pct(market.yes)}</strong></div>
+        <div><span>NO</span><strong>{pct(market.no)}</strong></div>
+        <div><span>Closes</span><strong>{daysLabel(market.daysToClose)}</strong></div>
+      </div>
+
+      <div className="cardFooter">
+        <span>{market.attentionReason}</span>
+        <span>{usd(market.volume)} traded</span>
+      </div>
+
+      {typeof priceDelta === "number" && Math.abs(priceDelta) >= 0.0001 && (
+        <div className={priceDelta > 0 ? "deltaUp simpleDelta" : "deltaDown simpleDelta"}>
+          YES {priceDelta > 0 ? "+" : ""}{(priceDelta * 100).toFixed(1)} pts since last scan
+        </div>
+      )}
+    </button>
+  );
+}
+
+function CompactMarketRow({
+  market,
+  onSelect,
+}: {
+  market: SignalMarket;
+  onSelect: (market: SignalMarket) => void;
+}) {
+  return (
+    <button className="compactMarketRow" onClick={() => onSelect(market)}>
+      <div className="compactMarketMain">
+        <div className="compactTags">
+          <span>{market.category ?? "market"}</span>
+          <span>{market.phase}</span>
+        </div>
+        <strong>{marketLabel(market)}</strong>
+      </div>
+      <div className="compactMarketStats">
+        <span>YES <b>{pct(market.yes)}</b></span>
+        <span>{daysLabel(market.daysToClose)}</span>
+        <span>{usd(market.volume)}</span>
+      </div>
+    </button>
   );
 }
 
