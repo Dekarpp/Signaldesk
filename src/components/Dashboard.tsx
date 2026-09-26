@@ -420,7 +420,17 @@ export default function Dashboard() {
       ? Math.max(...data.markets.map((market) => market.signalScore))
       : null;
 
-  function chooseMarket(market: SignalMarket) {
+  const selectedFilteredIndex = selected
+    ? filtered.findIndex((market) => market.marketId === selected.marketId)
+    : -1;
+  const previousMarket =
+    selectedFilteredIndex > 0 ? filtered[selectedFilteredIndex - 1] : null;
+  const nextMarket =
+    selectedFilteredIndex >= 0 && selectedFilteredIndex < filtered.length - 1
+      ? filtered[selectedFilteredIndex + 1]
+      : null;
+
+  function chooseMarket(market: SignalMarket, scrollToResearch = true) {
     setSelected(market);
     void trackTraction("market_opened", {
       category: market.category ?? undefined,
@@ -433,20 +443,22 @@ export default function Dashboard() {
     setQuote(null);
     setBuildPreview(null);
 
-    const fullCatalog =
-      typeof document !== "undefined"
-        ? document.querySelector<HTMLDetailsElement>(".allCatalog")
-        : null;
-    if (fullCatalog) fullCatalog.open = false;
+    if (scrollToResearch) {
+      const fullCatalog =
+        typeof document !== "undefined"
+          ? document.querySelector<HTMLDetailsElement>(".allCatalog")
+          : null;
+      if (fullCatalog) fullCatalog.open = false;
 
-    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        document.getElementById("research")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
+        requestAnimationFrame(() => {
+          document.getElementById("research")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
         });
       });
-    });
+    }
   }
 
   function toggleWatchlist(marketId: string) {
@@ -709,7 +721,7 @@ export default function Dashboard() {
 
       {error && <div className="error">{error}</div>}
 
-      <section className="scannerHeader">
+      <section className="scannerHeader" id="markets">
         <div className="scannerTitle">
           <div>
             <div className="eyebrow">Choose a market</div>
@@ -831,6 +843,43 @@ export default function Dashboard() {
 
       {selected && (
         <section className="drawer" id="research">
+          <div className="researchNavigator">
+            <button
+              className="researchNavBtn"
+              disabled={!previousMarket}
+              onClick={() => previousMarket && chooseMarket(previousMarket, false)}
+            >
+              <span>←</span>
+              <b>Previous</b>
+            </button>
+
+            <button
+              className="researchNavCenter"
+              onClick={() =>
+                document.getElementById("markets")?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                })
+              }
+            >
+              <span>Markets</span>
+              <small>
+                {selectedFilteredIndex >= 0
+                  ? String(selectedFilteredIndex + 1) + " / " + String(filtered.length)
+                  : String(filtered.length) + " markets"}
+              </small>
+            </button>
+
+            <button
+              className="researchNavBtn researchNavNext"
+              disabled={!nextMarket}
+              onClick={() => nextMarket && chooseMarket(nextMarket, false)}
+            >
+              <b>Next</b>
+              <span>→</span>
+            </button>
+          </div>
+
           <div className="drawerGrid">
             <div>
               <div className="eyebrow">Simple research</div>
