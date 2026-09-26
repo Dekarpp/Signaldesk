@@ -3443,3 +3443,13 @@ h1 {
     padding-right: 8px;
   }
 }
+
+
+.sourceChips a small {
+  flex: 0 0 auto;
+  margin-left: 1px;
+  border-left: 1px solid #2b3540;
+  padding-left: 6px;
+  color: #7f8b98;
+  font-size: 8px;
+}
