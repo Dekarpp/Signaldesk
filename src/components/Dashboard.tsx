@@ -1288,40 +1288,55 @@ function MarketSnapshot({
           <MarketTimeline market={market} />
         </div>
 
-        <div className="visualCard visualCardWide priceHistoryPanel">
-          <div className="visualHead">
-            <div>
-              <span>YES price history</span>
-              <strong>Real observed Panta snapshots</strong>
-            </div>
-            <small>{history.length} point{history.length === 1 ? "" : "s"}</small>
-          </div>
-          <PriceHistoryChart points={history} />
-        </div>
-
-        <div className="visualCard">
-          <div className="visualHead">
-            <div>
-              <span>Recent trade flow</span>
-              <strong>{yesFlowPercent == null ? "No flow yet" : yesFlowPercent + "% YES"}</strong>
-            </div>
-            <small>{activity?.tradeCount ?? 0} trades</small>
-          </div>
-
-          {yesFlowPercent == null ? (
-            <div className="chartEmpty">No recent Panta trade flow to chart.</div>
-          ) : (
-            <>
-              <div className="flowBar" aria-label="Recent YES versus NO trade flow">
-                <div style={{width: yesFlowPercent + "%"}} />
+        {history.length >= 2 && (
+          <div className="visualCard visualCardWide priceHistoryPanel">
+            <div className="visualHead">
+              <div>
+                <span>YES price history</span>
+                <strong>Real observed Panta snapshots</strong>
               </div>
-              <div className="flowLabels">
-                <span>YES {yesFlowPercent}%</span>
-                <span>NO {100 - yesFlowPercent}%</span>
+              <small>{history.length} points</small>
+            </div>
+            <PriceHistoryChart points={history} />
+          </div>
+        )}
+
+        {yesFlowPercent != null && (
+          <div className="visualCard">
+            <div className="visualHead">
+              <div>
+                <span>Recent trade flow</span>
+                <strong>{yesFlowPercent}% YES</strong>
               </div>
-            </>
-          )}
-        </div>
+              <small>{activity?.tradeCount ?? 0} trades</small>
+            </div>
+            <div className="flowBar" aria-label="Recent YES versus NO trade flow">
+              <div style={{width: yesFlowPercent + "%"}} />
+            </div>
+            <div className="flowLabels">
+              <span>YES {yesFlowPercent}%</span>
+              <span>NO {100 - yesFlowPercent}%</span>
+            </div>
+          </div>
+        )}
+
+        {(history.length < 2 || yesFlowPercent == null) && (
+          <div className={"dataAvailability " + (history.length < 2 && yesFlowPercent == null ? "dataAvailabilityWide" : "")}>
+            <div>
+              <span>Data availability</span>
+              <strong>
+                {history.length < 2 && yesFlowPercent == null
+                  ? "No chartable history or recent trade flow"
+                  : history.length < 2
+                    ? "Price history is still building"
+                    : "No recent Panta trade flow"}
+              </strong>
+            </div>
+            <small>
+              SignalDesk only draws charts from observed Panta data. Missing data is never simulated.
+            </small>
+          </div>
+        )}
       </div>
     </div>
   );
