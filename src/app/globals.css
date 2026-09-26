@@ -3343,3 +3343,103 @@ h1 {
     text-align: left;
   }
 }
+
+
+.researchNavigator {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 7px;
+  border: 1px solid rgba(64,78,91,.88);
+  border-radius: 14px;
+  background: rgba(8,12,17,.92);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.22);
+}
+
+.researchNavBtn,
+.researchNavCenter {
+  min-height: 42px;
+  border: 1px solid #2a3540;
+  border-radius: 10px;
+  background: rgba(255,255,255,.015);
+  color: #dfe7ee;
+  cursor: pointer;
+}
+
+.researchNavBtn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 11px;
+}
+
+.researchNavNext {
+  justify-content: flex-end;
+}
+
+.researchNavBtn span {
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.researchNavBtn b {
+  font-size: 10px;
+  letter-spacing: .02em;
+}
+
+.researchNavBtn:disabled {
+  opacity: .28;
+  cursor: default;
+}
+
+.researchNavCenter {
+  min-width: 92px;
+  padding: 6px 12px;
+  text-align: center;
+}
+
+.researchNavCenter span {
+  display: block;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.researchNavCenter small {
+  display: block;
+  margin-top: 2px;
+  color: #81909e;
+  font-size: 8px;
+}
+
+@media (max-width: 520px) {
+  .researchNavigator {
+    top: 6px;
+    margin-left: -2px;
+    margin-right: -2px;
+  }
+
+  .researchNavBtn {
+    padding: 0 9px;
+  }
+
+  .researchNavBtn b {
+    font-size: 9px;
+  }
+
+  .researchNavCenter {
+    min-width: 78px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
