@@ -1,62 +1,80 @@
-# SignalDesk — Submission Package
+# SignalDesk — Final Submission Package
 
 _Last updated: September 25, 2026_
 
-This file is the copy-ready package for the Colosseum Crypto World's Fair submission and the Panta API Sidetrack on Superteam Earn.
+## Product
 
-## Submission title
+**SignalDesk**
 
-**SignalDesk — AI research intelligence for Panta markets**
+**Tagline:** Market signals. Real evidence. Better decisions.
+
+**Live demo:** https://signaldesk-henna.vercel.app
+
+**Source:** https://github.com/Dekarpp/Signaldesk
 
 ## One-line description
 
-SignalDesk turns live Panta markets into a decision-support dashboard that separates what the market thinks from what current public evidence supports, then adds market activity, wallet positions, fresh web research, and guarded execution preparation.
+SignalDesk is a decision-support layer for Panta that combines live market signals with fresh public evidence, counterevidence, uncertainty, and wallet context before a user acts.
 
 ## Short description
 
-SignalDesk is a prediction-market intelligence terminal built on the Panta API. It scans live markets, ranks what deserves attention, summarizes recent Panta trading activity, researches fresh real-world evidence, and adds a Market-vs-Evidence decision lens so users can compare the market-implied probability with the direction and strength of current evidence without receiving a trade recommendation. It also explains plausible drivers behind market moves and tracks watchlists and public-wallet positions. It also implements Panta primary quote and unsigned-build adapters; the UI only enables that path when the live Panta catalog exposes executable primary pricing, and it always stops before signing or broadcasting.
+SignalDesk turns Panta prediction-market infrastructure into a visual research terminal. It browses the full Panta catalog, separates current and recently closed markets, summarizes market state and activity, and adds a Market-vs-Evidence decision lens powered by fresh web research. Users can see what the market currently implies, what public evidence supports, what pushes back, and what could change the view. Public-wallet positions and guarded Panta quote/build adapters connect research to execution while keeping signing and broadcasting outside SignalDesk.
 
 ## Problem
 
-Prediction-market research is fragmented. A user sees a price, then has to open multiple tabs to understand the event, recent news, market activity, resolution rules, portfolio exposure, and execution mechanics.
+Prediction-market prices are useful signals, but the research workflow around them is fragmented. A user often has to jump between the market page, news sources, trade activity, resolution rules, wallet positions, and execution tools before making sense of one market.
 
-That creates three problems:
+This creates three problems:
 
 1. **Attention overload** — users do not know which markets deserve research first.
-2. **Context fragmentation** — market prices, activity, evidence, and wallet exposure live in different places.
-3. **Execution pressure** — trading interfaces often move quickly from discovery to action without a structured research step.
+2. **Context fragmentation** — market signals and real-world evidence live in different places.
+3. **Execution pressure** — interfaces can move quickly from discovery to action without a structured evidence check.
 
 ## Solution
 
 SignalDesk creates a research-first workflow:
 
-- Panta market discovery and detail enrichment
+- full Panta market catalog
+- Current / Recently closed / All-market browsing
+- Panta market images with clear fallback visuals
 - deterministic research-priority scoring
-- recent trade/activity context
-- fresh AI research with public sources
+- live YES/NO market state
+- Panta trade/activity context
+- fresh AI-assisted web research with sources
 - Market-vs-Evidence decision lens
-- supporting evidence, counterevidence, and conditions that would change the view
-- "Why did this market move?" analysis
-- local watchlists
-- Panta wallet positions
-- guarded primary-market quote preview when Panta exposes executable primary pricing
-- unsigned transaction build adapter
-- explicit human wallet confirmation before any signing/broadcast
+- supporting evidence and counterevidence
+- explicit “what could change this view” conditions
+- market-move explanation when an actual move or Panta trade is observed
+- browser-persistent watchlist
+- Panta public-wallet positions
+- guarded primary-market quote adapter
+- unsigned Panta transaction-build adapter
+- explicit human/wallet execution boundary
+
+## Product insight
+
+Prediction markets already compress beliefs into a price. The missing layer is not another market page — it is an interface that helps users understand **why the market looks the way it does and how current evidence compares with that signal**.
+
+SignalDesk therefore separates:
+
+**Market signal → Evidence direction → Counterevidence → Uncertainty → What changes the view → User decision**
+
+The product does not auto-trade and does not present its evidence lens as a guaranteed forecast.
 
 ## Why Panta is essential
 
-SignalDesk depends on Panta for the live market system underneath the product:
+Panta is core product infrastructure, not a cosmetic data source.
 
-- market catalog
-- market detail and prices
-- trade activity
-- wallet positions
-- quote generation
-- Solana transaction building
+SignalDesk uses Panta for:
 
-Without Panta, SignalDesk would only be a generic news summarizer. Panta gives the product real market state, real user exposure, and a path from research into non-custodial execution.
+- market discovery and catalog browsing
+- market details and prices
+- recent trades/activity
+- public-wallet positions
+- primary quote generation
+- unsigned transaction building
 
-## Panta endpoints demonstrated
+Implemented flows:
 
 - GET /markets/
 - GET /markets/{marketId}/
@@ -65,197 +83,372 @@ Without Panta, SignalDesk would only be a generic news summarizer. Panta gives t
 - POST /primaryorderquote/
 - POST /primaryorderbuild/
 
+The UI only enables quote preparation when a live primary market exposes executable YES/NO pricing. SignalDesk never signs or broadcasts transactions.
+
 ## Technical execution
 
 - Next.js 16 App Router
 - TypeScript
 - Vercel production deployment
 - server-side Panta API integration
-- OpenAI Responses API + web search for live-event research
-- no secret keys shipped to the browser
-- no private wallet keys requested or stored
-- unsigned Panta transaction build with wallet signing kept outside the server flow
-- responsive UI
-- GitHub Actions production-build check
-- Panta-required attribution
+- cursor-based Panta market catalog pagination
+- OpenAI Responses API + web search
+- strict structured AI output
+- source extraction and compact source rendering
+- 30-second Panta catalog cache
+- AI research cache
+- public-demo AI rate limits
+- server-side secrets
+- no seed phrases/private keys
+- GitHub Actions production-build CI
+- responsive mobile/desktop UI
+- MIT open-source license
 
-## Product differentiation
+## Safety and accuracy
 
-SignalDesk is not another prediction-market destination. It is an intelligence layer over prediction-market infrastructure.
+- Market price is labeled as a market signal, not a SignalDesk prediction.
+- Missing Panta prices are shown as **No live price**, never visualized as 50%.
+- Missing titles/images are handled with explicit fallbacks rather than invented market data.
+- Political markets receive neutral factual analysis only; SignalDesk does not issue YES/NO political outcome predictions.
+- “Explain the move” stays disabled until a price move or trade activity is actually observed.
+- Quote/build remains unavailable when Panta does not expose executable live pricing.
 
-The wedge is the workflow from:
+## Differentiation
 
-**market signal → market-vs-evidence comparison → context → counterevidence → movement explanation → wallet exposure → execution preparation**
+SignalDesk is not another prediction-market destination.
 
-That workflow can later serve traders, media teams, creators, communities, and other applications that want Panta market intelligence without rebuilding Panta itself.
+Its wedge is the decision-support layer above Panta:
+
+**live Panta market state + independent fresh evidence + counterevidence + uncertainty + wallet context**
+
+This can serve individual market users first, then expand into creator/media tooling, research teams, widgets, and APIs.
 
 ## Business model
 
-### Initial customer
+### Initial user
 
-Active prediction-market users who monitor multiple markets and repeatedly research news/context before acting.
+Active prediction-market users who repeatedly research multiple markets before acting.
 
-### Paid product
+### SignalDesk Pro
 
-**SignalDesk Pro**
+Potential paid features:
+
 - persistent watchlists
-- probability history
+- durable market history
 - saved research
-- market-move alerts
+- alerts for market moves and evidence changes
 - portfolio intelligence
 - higher-frequency research refreshes
 
-Potential starting price: **$15–$30/month** for individual Pro users.
+Initial pricing hypothesis: **$15–$30/month** for individual Pro users.
 
 ### B2B expansion
 
 - embeddable market-intelligence widgets
 - creator/media dashboards
-- API access to ranked research signals
-- team workspaces and alerting
+- API access to ranked market intelligence
+- team research workspaces
+- alerting infrastructure
 
-### Distribution
+### Go-to-market
 
-- Panta ecosystem
-- prediction-market communities
-- crypto research communities
-- creators and publishers covering events already represented as Panta markets
+1. Panta and prediction-market communities
+2. direct beta sharing with active market users
+3. crypto research communities
+4. creators/publishers covering events represented as Panta markets
+5. later: embeddable widgets and B2B API distribution
 
-## Impact potential
+## Traction status
 
-Prediction markets produce a real-time information signal, but the raw price alone is not enough. SignalDesk can make that signal more usable by pairing it with evidence, uncertainty, market mechanics, and portfolio context.
+SignalDesk has anonymous product instrumentation for:
 
-The same research layer can be embedded into trading terminals, media products, sports/event communities, and creator workflows.
+- sessions
+- market opens
+- watchlist adds
+- research generation
+- move research
+- wallet-position loads
+- quote/build usage
+- feedback ratings/comments
 
-## Demo URL
+Do **not** claim external-user counts, revenue, or feedback that has not actually been observed.
 
-https://signaldesk-henna.vercel.app
+Before final submission, collect genuine feedback from a small beta group if possible and add only verified usage evidence.
 
-## Source repository
+---
 
-https://github.com/Dekarpp/Signaldesk
+# Colosseum package
 
-Repository is public and ready for judge review.
+## Product name
 
-## Two-minute demo script
+SignalDesk
 
-### 0:00–0:15 — Problem
+## Brief description
 
-"Prediction markets are useful signals, but researching them is fragmented. SignalDesk turns Panta into a research-first intelligence terminal."
+SignalDesk is a decision-support layer for Panta prediction markets. It combines live market signals, activity, and wallet context with fresh public evidence, counterevidence, and uncertainty so users can understand a market before acting.
 
-### 0:15–0:35 — Live Panta scanner
+## What did you build?
 
-Open the dashboard and point out:
-- LIVE Panta connection
-- live market cards
-- research score
-- category / phase filters
-- watchlist
+SignalDesk turns Panta market infrastructure into a visual intelligence terminal. It browses the full Panta catalog, separates current and recently closed markets, ranks research priority, summarizes Panta market state and activity, and adds a Market-vs-Evidence research layer using fresh public sources.
 
-Say:
+Users can see what the market currently implies, what the evidence supports, what contradicts that view, and what could change it. SignalDesk also reads public Panta wallet positions and implements guarded primary quote and unsigned transaction-build adapters.
 
-"SignalDesk pulls live Panta markets and ranks what deserves attention using activity, uncertainty, timing, and phase."
+## Why is it useful?
 
-### 0:35–1:05 — Research + movement intelligence
+A prediction-market price alone does not explain the event. Users still have to research news, check market mechanics, inspect activity, understand resolution conditions, and evaluate their own exposure.
 
-Open a named live market.
+SignalDesk compresses that fragmented workflow into one evidence-first interface and keeps research separate from execution.
 
-Show:
-- market probabilities
-- recent Panta trade activity
-- Generate research brief
-- sources
-- Why did this market move?
+## How does it use blockchain / Solana?
 
-Say:
+Panta’s Solana-based infrastructure provides the live market system underneath SignalDesk. SignalDesk consumes Panta market discovery, market details/prices, trade activity and wallet positions, and implements Panta quote-generation and unsigned transaction-building adapters. Any final signature remains in a user-controlled wallet.
 
-"Panta shows what the market thinks. SignalDesk adds a separate evidence lens showing whether current public evidence leans YES, balanced, NO, or remains unclear. It also shows the strongest counterevidence and what would change that view — without telling the user what trade to make."
+## Why now?
 
-### 1:05–1:30 — Wallet intelligence
+Prediction-market infrastructure is becoming increasingly composable through APIs, while AI can now continuously synthesize fresh public evidence. SignalDesk combines those two trends: markets provide a real-time belief signal and AI provides the context layer needed to interpret it.
 
-Paste a public Panta wallet with positions, if available.
+## Business potential
 
-Show:
-- side
-- shares
-- phase
-- active mark-to-market estimate
+SignalDesk can start as a Pro research subscription for active prediction-market users and expand into B2B intelligence for creators, media teams, communities, terminals, and other products that want market research without rebuilding prediction-market infrastructure.
 
-Say:
+## Current validation
 
-"SignalDesk also connects research to the user's actual Panta exposure without asking for private keys."
+The product is live, open source, connected to Panta production data, and instrumented for early beta usage and feedback. No unverified traction or revenue claims should be added.
 
-### 1:30–1:50 — Wallet intelligence + execution boundary
+---
 
-Select a primary market.
+# Panta API Sidetrack package
 
-Show:
-- load a public wallet's Panta positions
-- select a Panta primary market
-- show that execution stays disabled when the selected live market has no executable YES/NO pricing
-- human-confirmation / execution-boundary messaging
+## Copy-ready submission
 
-Say:
+**SignalDesk — Market signals. Real evidence. Better decisions.**
 
-"SignalDesk connects research to public Panta wallet exposure, and it guards execution when live Panta order data is unavailable. The wallet remains the execution boundary."
+SignalDesk is an AI + prediction-market decision-support terminal built directly on the Panta API.
 
-### 1:50–2:00 — Close
+It uses Panta for the full market catalog, market details/prices, recent trades, public-wallet positions, and guarded primary quote / unsigned transaction-build flows. On top of that market infrastructure, SignalDesk adds deterministic research prioritization and a Market-vs-Evidence layer that checks fresh public sources, surfaces supporting evidence and counterevidence, explains uncertainty, and shows what could change the view.
 
-"SignalDesk turns Panta market infrastructure into an intelligence layer that can serve traders, creators, communities, and other products. Powered by Panta."
-
-## Suggested Colosseum submission copy
-
-### What did you build?
-
-SignalDesk is an AI research and market-intelligence layer for Panta. It converts live prediction markets into a prioritized research queue, combines Panta prices and trade activity with current public evidence, explains likely drivers behind market movement, surfaces wallet positions, and includes guarded adapters for Panta quote and unsigned transaction preparation.
-
-### Why is it useful?
-
-Prediction-market users currently have to assemble context manually across market pages, news sources, wallets, and trade feeds. SignalDesk compresses that work into a single research workflow and creates a safer separation between research and execution.
-
-### How does it use blockchain?
-
-Panta's Solana-based market infrastructure is the product's source of market state and execution primitives. SignalDesk consumes Panta market discovery, market detail, trades and positions in the live workflow, and implements Panta quote-generation and transaction-building adapters behind a live-data capability guard. The final signature remains with the user's wallet.
-
-### Business potential
-
-SignalDesk can monetize through a Pro research subscription for alerts/history/saved research, then expand into B2B intelligence, creator/media tooling, and embeddable market research.
-
-## Suggested Panta Sidetrack submission copy
-
-SignalDesk is an AI + prediction-market intelligence terminal built directly on the Panta API.
-
-It uses Panta for live market discovery, market detail/prices, recent market trades and wallet positions, with guarded primary-market quote and unsigned-transaction adapters. SignalDesk then adds a research layer: deterministic attention scoring, watchlists, fresh web research with sources, and a "Why did this market move?" workflow that combines observed Panta price/activity context with real-world evidence.
-
-The result is a product that helps users understand Panta markets before they act. Execution remains non-custodial and human-confirmed: SignalDesk never stores private keys and never auto-signs or auto-broadcasts transactions.
+The result is a research-first Panta experience: users can understand the market signal before they act. Execution stays non-custodial and human-controlled — SignalDesk never requests private keys and never auto-signs or broadcasts transactions.
 
 Live demo: https://signaldesk-henna.vercel.app
 
-## Final submission checklist
+Source: https://github.com/Dekarpp/Signaldesk
 
-- [x] Live Panta scanner
-- [x] Panta market detail/prices
-- [x] Panta recent trade activity
-- [x] AI research with fresh sources
-- [x] Market-vs-Evidence decision lens
-- [x] Counterevidence and what-would-change-the-view analysis
-- [x] Why-this-moved workflow
-- [x] Watchlist
-- [x] Panta positions UI
-- [x] Guarded Panta quote adapter / preview
-- [x] Panta unsigned transaction build adapter
+---
+
+# Video 1 — Colosseum presentation / pitch
+
+**Target length: 2:20–2:40**
+
+This is the founder/startup presentation, not a screen-by-screen technical walkthrough.
+
+### 0:00–0:20 — Hook
+
+“Prediction markets are great at telling you what the market thinks. They are much worse at helping you understand why. SignalDesk is the decision-support layer that sits on top of Panta: market signals, real evidence, better decisions.”
+
+### 0:20–0:45 — Problem
+
+“Today, understanding one market means jumping between the market page, news, resolution rules, trade activity and wallet exposure. The price is useful, but the research around it is fragmented.”
+
+### 0:45–1:15 — Product
+
+“SignalDesk pulls the Panta catalog, organizes current and historical markets, and turns each market into a visual research dashboard. The key feature is Market vs Evidence: Panta shows the current market signal, while SignalDesk independently checks fresh public evidence, counterevidence, uncertainty, and what could change the view.”
+
+Show a few short product cuts rather than doing the full demo here.
+
+### 1:15–1:40 — Why Panta / Solana
+
+“Panta is not just a data feed. SignalDesk uses its market discovery, market details, trades, positions, quote and transaction-build infrastructure. The result is a path from discovery to research to non-custodial execution, while the user’s wallet remains the signing boundary.”
+
+### 1:40–2:05 — Business
+
+“The initial product is for active prediction-market users. A Pro layer can add durable market history, saved research, alerts and portfolio intelligence. The same research layer can later power creator and media dashboards, embeddable widgets and B2B APIs.”
+
+### 2:05–2:30 — Close
+
+“Prediction markets already produce a powerful real-time signal. SignalDesk makes that signal understandable and actionable as research — without deciding for the user. Market signals. Real evidence. Better decisions. Powered by Panta.”
+
+---
+
+# Video 2 — Product demo
+
+**Target length: 2:15–2:45. Keep it under 3 minutes.**
+
+### 0:00–0:10 — Open
+
+Show the homepage.
+
+Say:
+
+“SignalDesk is live on Panta. It turns prediction-market signals into an evidence-first research workflow.”
+
+Point briefly to:
+- Panta connected
+- LIVE
+- AI READY
+
+### 0:10–0:35 — Market discovery
+
+Show:
+
+- Current markets
+- market imagery
+- search / filters
+- Recently closed
+- collapsed All Panta markets
+
+Say:
+
+“SignalDesk browses the full Panta catalog, keeps current markets front and center, and still makes recently closed and historical markets available for research.”
+
+### 0:35–1:00 — Open the best live market
+
+Use a named, research-ready, non-political market if available.
+
+Show:
+
+- market image/fallback
+- YES/NO market view
+- money traded
+- time left
+- research priority
+- timeline / activity
+
+Say:
+
+“This is Panta’s market state. SignalDesk keeps it separate from its own research.”
+
+### 1:00–1:40 — Analyze the evidence
+
+Click **Analyze the evidence**.
+
+Show:
+
+- Market vs Evidence
+- evidence direction
+- evidence strength
+- Bottom line
+- See why
+
+Expand **See why** just long enough to show:
+
+- supporting evidence
+- counterevidence
+- biggest uncertainty
+- what could change the view
+
+Say:
+
+“The evidence lens is not a trade instruction. It shows what current public evidence supports, what pushes back, and what would make the view change.”
+
+### 1:40–2:00 — Sources
+
+Open source chips briefly.
+
+Say:
+
+“Research uses fresh public sources, and the evidence is inspectable rather than hidden behind an AI answer.”
+
+### 2:00–2:25 — Panta integration boundary
+
+Open **Panta API · Integration demo** briefly.
+
+Show:
+
+- public-wallet positions
+- quote/build controls
+- disabled execution if the current live market is not executable
+
+Say:
+
+“Panta also powers wallet positions and the quote/build path. SignalDesk never holds keys, signs, or broadcasts for the user.”
+
+Do not attempt a successful quote unless an executable primary market has been verified immediately before recording.
+
+### 2:25–2:40 — Close
+
+Return to the main research view.
+
+“SignalDesk turns Panta from a market destination into an intelligence layer. Powered by Panta.”
+
+---
+
+# Recording checklist
+
+Before recording:
+
+- use desktop browser at a clean zoom level
+- close unrelated tabs and notifications
+- do not open Vercel/GitHub/environment settings
+- never expose API keys
+- refresh SignalDesk once
+- confirm Panta connected / LIVE / AI READY
+- choose a named non-political live market
+- pre-run the evidence analysis once if needed so you know the result is clean
+- confirm sources load
+- confirm no browser extensions/popups cover the UI
+- record in English
+- keep presentation video 2–3 minutes
+- keep product demo under 3 minutes
+
+---
+
+# Final application checklist
+
+## Product
+
+- [x] Production demo live
+- [x] Public GitHub repository
+- [x] MIT license
+- [x] Panta market discovery/catalog
+- [x] Panta market details/prices
+- [x] Panta market activity
+- [x] Panta wallet positions
+- [x] Panta quote adapter
+- [x] Panta unsigned-build adapter
+- [x] Market-vs-Evidence research
+- [x] Fresh sources
+- [x] Political neutrality safeguard
+- [x] Cost/rate-limit guard
+- [x] Mobile-responsive UI
 - [x] Powered by Panta attribution
-- [x] Human-confirmed execution boundary
-- [x] Responsive UI
-- [x] Vercel production deployment
-- [x] GitHub CI/build
-- [x] README / architecture / business plan
-- [x] Submission copy
-- [x] Make GitHub repository public
-- [ ] Record and upload ~2-minute demo video
-- [ ] Register/join Crypto World's Fair with the human's Colosseum account
-- [ ] Submit on Colosseum before the official deadline
-- [ ] Submit the same project separately to Panta API Sidetrack on Superteam Earn
-- [ ] Add any public demo-video URL to both submissions
-- [ ] Final human review before publishing
-- [ ] Re-test live Panta quote/build if an execution-ready primary market appears
+- [x] CI + production deployment
+
+## Media
+
+- [ ] Final product graphic/logo for portal
+- [ ] Record 2–3 minute Colosseum presentation video
+- [ ] Record product demo video under 3 minutes
+- [ ] Upload both videos and confirm public/unlisted access works without login
+
+## Colosseum
+
+- [ ] Join/register for Crypto World’s Fair
+- [ ] Fill team/founder profile
+- [ ] Add SignalDesk product name + description
+- [ ] Select Solana / relevant tools
+- [ ] Add product graphic
+- [ ] Add public GitHub repo
+- [ ] Add presentation video
+- [ ] Add product-demo video
+- [ ] Add go-to-market / demand validation answers
+- [ ] Final preview
+- [ ] Submit before the official deadline
+
+## Panta / Superteam Earn
+
+- [ ] Open Panta API Sidetrack listing
+- [ ] Submit in English
+- [ ] Add SignalDesk description
+- [ ] Explain meaningful Panta API integration
+- [ ] Add working demo link
+- [ ] Add GitHub link
+- [ ] Add demo video
+- [ ] Ensure the same project is also submitted to Colosseum
+- [ ] Final preview and submit
+
+## After submission
+
+- [ ] Save screenshots/confirmation of both submissions
+- [ ] Keep the production URL stable
+- [ ] Avoid major product changes unless fixing a real bug
+- [ ] Monitor genuine user feedback and production errors
