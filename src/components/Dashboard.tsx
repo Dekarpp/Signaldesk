@@ -138,6 +138,41 @@ const marketDescription = (market: SignalMarket) => {
   return "Panta has not provided readable question text yet.";
 };
 
+const marketDisplayCategory = (market: SignalMarket) => {
+  const raw = String(market.category ?? "market").toLowerCase();
+  const text = [
+    market.category,
+    market.title,
+    market.description,
+    market.question,
+    market.oracle,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/\b(weather|wmo|forecast|temperature|rainfall|precipitation|hurricane|storm|snowfall|climate)\b/.test(text)) {
+    return "weather";
+  }
+  if (/\b(politic|election|electoral|candidate|president|prime minister|parliament|congress|senate|governor|mayor|referendum|ballot)\b/.test(text)) {
+    return "politics";
+  }
+  if (/\b(gaming|game|gta|playstation|xbox|nintendo|steam)\b/.test(text)) {
+    return "gaming";
+  }
+  if (/\b(crypto|bitcoin|ethereum|solana|btc|eth)\b/.test(text)) {
+    return "crypto";
+  }
+  if (/\b(stock|stocks|equity|nasdaq|nyse)\b/.test(text)) {
+    return "stocks";
+  }
+  if (/\b(sport|sports|soccer|football|basketball|baseball|tennis|nba|nfl|mlb|nhl|fifa)\b/.test(text)) {
+    return "sports";
+  }
+
+  return raw || "market";
+};
+
 const marketResearchReady = (market: SignalMarket) =>
   Boolean(market.title?.trim()) ||
   Boolean(market.description?.trim()) ||
@@ -332,7 +367,8 @@ export default function Dashboard() {
         String(market.title ?? "").toLowerCase().includes(search) ||
         String(market.description ?? "").toLowerCase().includes(search) ||
         String(market.category ?? "").toLowerCase().includes(search);
-      const matchesCategory = category === "all" || market.category === category;
+      const matchesCategory =
+        category === "all" || marketDisplayCategory(market) === category;
       const matchesPhase = phase === "all" || market.phase === phase;
       const matchesWatchlist = !watchlistOnly || watchlist.includes(market.marketId);
       return matchesSearch && matchesCategory && matchesPhase && matchesWatchlist;
@@ -395,6 +431,14 @@ export default function Dashboard() {
         (b.daysToClose ?? Number.NEGATIVE_INFINITY) -
         (a.daysToClose ?? Number.NEGATIVE_INFINITY),
     );
+
+  const displayCategories = useMemo(
+    () =>
+      [...new Set((data?.markets ?? []).map((market) => marketDisplayCategory(market)))]
+        .filter(Boolean)
+        .sort(),
+    [data],
+  );
 
   const phaseValues = useMemo(
     () =>
@@ -754,7 +798,7 @@ export default function Dashboard() {
           />
           <select className="select" value={category} onChange={(event) => setCategory(event.target.value)}>
             <option value="all">All categories</option>
-            {(data?.categories ?? []).map((item) => <option value={item} key={item}>{item}</option>)}
+            {displayCategories.map((item) => <option value={item} key={item}>{item}</option>)}
           </select>
           <select className="select" value={phase} onChange={(event) => setPhase(event.target.value)}>
             <option value="all">All statuses</option>
@@ -1170,7 +1214,7 @@ function MarketVisual({
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   const image = market.images?.[0];
-  const category = String(market.category ?? "market").toLowerCase();
+  const category = marketDisplayCategory(market);
   const label = marketLabel(market);
 
   const categoryMark =
@@ -1215,7 +1259,7 @@ function MarketVisual({
       )}
       {variant !== "thumb" && (
         <div className="marketVisualShade">
-          <span>{market.category ?? "Panta market"}</span>
+          <span>{marketDisplayCategory(market)}</span>
           {image && !imageFailed ? <small>Image from Panta</small> : <small>SignalDesk visual</small>}
         </div>
       )}
@@ -1244,7 +1288,7 @@ function MarketCard({
       <MarketVisual market={market} variant="card" />
       <div className="cardTop simpleCardTop">
         <div className="cardTags">
-          <span className="categoryTag">{market.category ?? "market"}</span>
+          <span className="categoryTag">{marketDisplayCategory(market)}</span>
           <span className="phase">{market.phase}</span>
           {watchlist.includes(market.marketId) && (
             <span className="watchFlag">★ saved</span>
@@ -1301,7 +1345,7 @@ function CompactMarketRow({
       <MarketVisual market={market} variant="thumb" />
       <div className="compactMarketMain">
         <div className="compactTags">
-          <span>{market.category ?? "market"}</span>
+          <span>{marketDisplayCategory(market)}</span>
           <span>{market.phase}</span>
         </div>
         <strong>{marketLabel(market)}</strong>
