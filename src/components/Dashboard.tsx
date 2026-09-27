@@ -1542,7 +1542,7 @@ function SimpleResearchBrief({
           <h3>{brief.title}</h3>
         </div>
         <span className={"confidence confidence" + brief.confidence}>
-          Evidence: {brief.confidence}
+          Source quality: {brief.confidence}
         </span>
       </div>
 
@@ -1617,7 +1617,7 @@ function DecisionLensCard({
           <h3>{label}</h3>
         </div>
         <span className={"decisionStrength strength" + decision.strength}>
-          {decision.strength} evidence
+          Direction strength: {decision.strength}
         </span>
       </div>
 
