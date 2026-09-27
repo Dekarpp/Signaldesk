@@ -212,7 +212,7 @@ export function MarketVsEvidenceChart({
                   style={{left: evidencePosition + "%"}}
                 >
                   <b>{evidenceLabel}</b>
-                  <small>{strength} evidence</small>
+                  <small>Direction strength: {strength}</small>
                 </div>
               )}
             </div>
