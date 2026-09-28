@@ -405,22 +405,20 @@ async function callResearchModel({
     }
   }
 
-  const usedFallback = !brief;
-  const finalBrief = brief ?? fallbackBrief(result.text);
-
-  if (usedFallback) {
-    console.warn("SIGNALDESK_ANALYZE_FALLBACK", {
+  if (!brief) {
+    console.warn("SIGNALDESK_ANALYZE_INCOMPLETE", {
       hasImage: Boolean(imageUrl),
       sandbox,
       rawTextLength: result.text.length,
     });
+    throw new Error("Research response incomplete. Please try again.");
   }
 
   return {
-    brief: finalBrief,
-    analysis: briefToText(finalBrief),
+    brief,
+    analysis: briefToText(brief),
     sources: result.sources.slice(0, 6),
-    usedFallback,
+    usedFallback: false,
   };
 }
 
