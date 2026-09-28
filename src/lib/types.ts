@@ -22,6 +22,8 @@ export type PantaMarket = {
   secondaryYesPrice?: string | null;
   secondaryNoPrice?: string | null;
   disclaimer?: string;
+  resolutionRule?: string;
+  sources?: string[];
   onChain?: unknown;
 };
 
