@@ -332,6 +332,15 @@ async function callResearchModel({
                   prompt +
                   "\n\nIMPORTANT: Return only the requested compact JSON object. Keep every field concise so the response completes.",
               },
+              ...(!sandbox && imageUrl
+                ? [
+                    {
+                      type: "input_image",
+                      image_url: imageUrl,
+                      detail: "auto",
+                    },
+                  ]
+                : []),
             ],
           },
         ],
@@ -396,12 +405,22 @@ async function callResearchModel({
     }
   }
 
+  const usedFallback = !brief;
   const finalBrief = brief ?? fallbackBrief(result.text);
+
+  if (usedFallback) {
+    console.warn("SIGNALDESK_ANALYZE_FALLBACK", {
+      hasImage: Boolean(imageUrl),
+      sandbox,
+      rawTextLength: result.text.length,
+    });
+  }
 
   return {
     brief: finalBrief,
     analysis: briefToText(finalBrief),
     sources: result.sources.slice(0, 6),
+    usedFallback,
   };
 }
 
@@ -511,7 +530,7 @@ export async function POST(req: NextRequest) {
       .toLowerCase();
 
     const politicalMarket =
-      /\b(politic|election|electoral|candidate|president|prime minister|parliament|congress|senate|senator|governor|mayor|referendum|ballot|democrat|republican|labour|conservative|party leader|cabinet|government vote)\b/.test(
+      /\b(politic(?:s|al)?|election|electoral|candidate|president|prime minister|parliament|congress|senate|senator|governor|mayor|referendum|ballot|democrat|republican|labour|conservative|party leader|cabinet|government vote)\b/.test(
         politicalText,
       );
 
@@ -558,7 +577,7 @@ export async function POST(req: NextRequest) {
     const cacheKey = researchCacheKey(market, mode, context);
     const cachedResearch = unstable_cache(
       () => callResearchModel({apiKey, prompt, imageUrl, sandbox}),
-      ["signaldesk-ai-research-v6", cacheKey],
+      ["signaldesk-ai-research-v7", cacheKey],
       {revalidate: mode === "move" ? 300 : 1800},
     );
 
@@ -586,6 +605,7 @@ export async function POST(req: NextRequest) {
       sandbox,
       usedImage: Boolean(!sandbox && imageUrl),
       mode,
+      usedFallback: Boolean(research.usedFallback),
     });
   } catch (error) {
     return NextResponse.json(
