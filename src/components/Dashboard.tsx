@@ -1237,6 +1237,21 @@ export default function Dashboard() {
   );
 }
 
+function optimizedMarketImage(url: string, variant: "card" | "thumb" | "hero") {
+  if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) {
+    return url;
+  }
+
+  const transform =
+    variant === "hero"
+      ? "f_auto,q_auto:best,c_limit,w_1600"
+      : variant === "card"
+        ? "f_auto,q_auto:good,c_limit,w_900"
+        : "f_auto,q_auto:good,c_limit,w_220";
+
+  return url.replace("/image/upload/", "/image/upload/" + transform + "/");
+}
+
 function MarketVisual({
   market,
   variant,
@@ -1246,6 +1261,7 @@ function MarketVisual({
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   const image = market.images?.[0];
+  const displayImage = image ? optimizedMarketImage(image, variant) : null;
   const category = marketDisplayCategory(market);
   const label = marketLabel(market);
 
@@ -1274,13 +1290,25 @@ function MarketVisual({
 
   return (
     <div className={"marketVisual marketVisual-" + variant + " visual-" + category.replace(/[^a-z0-9_-]/g, "-")}>
-      {image && !imageFailed ? (
-        <img
-          src={image}
-          alt={label}
-          loading={variant === "hero" ? "eager" : "lazy"}
-          onError={() => setImageFailed(true)}
-        />
+      {displayImage && !imageFailed ? (
+        <>
+          {variant === "hero" && (
+            <img
+              className="marketVisualBackdrop"
+              src={displayImage}
+              alt=""
+              aria-hidden="true"
+            />
+          )}
+          <img
+            className="marketVisualImage"
+            src={displayImage}
+            alt={label}
+            loading={variant === "hero" ? "eager" : "lazy"}
+            decoding="async"
+            onError={() => setImageFailed(true)}
+          />
+        </>
       ) : (
         <div className="marketVisualFallback" aria-label={category + " market visual"}>
           <span>{categoryMark}</span>
