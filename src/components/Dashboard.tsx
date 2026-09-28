@@ -173,9 +173,13 @@ const marketDisplayCategory = (market: SignalMarket) => {
   return raw || "market";
 };
 
-const marketResearchReady = (market: SignalMarket) =>
+const marketTextReady = (market: SignalMarket) =>
   Boolean(market.title?.trim()) ||
   Boolean(market.description?.trim()) ||
+  Boolean(market.question?.trim());
+
+const marketResearchReady = (market: SignalMarket) =>
+  marketTextReady(market) ||
   Boolean(market.images?.[0]);
 
 const politicalMarket = (market: SignalMarket) => {
@@ -190,7 +194,7 @@ const politicalMarket = (market: SignalMarket) => {
     .join(" ")
     .toLowerCase();
 
-  return /\b(politic|election|electoral|candidate|president|prime minister|parliament|congress|senate|senator|governor|mayor|referendum|ballot|democrat|republican|labour|conservative|party leader|cabinet|government vote)\b/.test(text);
+  return /\b(politic(?:s|al)?|election|electoral|candidate|president|prime minister|parliament|congress|senate|senator|governor|mayor|referendum|ballot|democrat|republican|labour|conservative|party leader|cabinet|government vote)\b/.test(text);
 };
 
 const daysLabel = (days: number | null) => {
@@ -288,13 +292,22 @@ export default function Dashboard() {
           (json.markets as SignalMarket[]).find(
             (market) =>
               (market.daysToClose ?? -1) >= 0 &&
-              marketResearchReady(market) &&
+              marketTextReady(market) &&
+              market.yes != null &&
+              market.no != null &&
               !politicalMarket(market),
           ) ??
           (json.markets as SignalMarket[]).find(
             (market) =>
               (market.daysToClose ?? -1) >= 0 &&
-              marketResearchReady(market),
+              marketTextReady(market) &&
+              !politicalMarket(market),
+          ) ??
+          (json.markets as SignalMarket[]).find(
+            (market) =>
+              (market.daysToClose ?? -1) >= 0 &&
+              marketResearchReady(market) &&
+              !politicalMarket(market),
           ) ??
           json.markets[0];
 
@@ -385,6 +398,15 @@ export default function Dashboard() {
         return (a.daysToClose ?? Number.MAX_SAFE_INTEGER) -
           (b.daysToClose ?? Number.MAX_SAFE_INTEGER);
       }
+
+      const textReadyDelta =
+        Number(marketTextReady(b)) - Number(marketTextReady(a));
+      if (textReadyDelta !== 0) return textReadyDelta;
+
+      const pricedDelta =
+        Number(b.yes != null && b.no != null) -
+        Number(a.yes != null && a.no != null);
+      if (pricedDelta !== 0) return pricedDelta;
 
       const researchReadyDelta =
         Number(marketResearchReady(b)) - Number(marketResearchReady(a));
