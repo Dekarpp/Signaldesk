@@ -65,6 +65,42 @@ function isCurrentOrUpcoming(market: PantaMarket, nowSec: number) {
   return end == null || end >= nowSec;
 }
 
+function hasUsefulDetail(market: PantaMarket) {
+  return Boolean(
+    market.title?.trim() ||
+      market.question?.trim() ||
+      market.description?.trim() ||
+      market.resolutionRule ||
+      market.yesPrice != null ||
+      market.noPrice != null ||
+      market.primaryYesPrice != null ||
+      market.primaryNoPrice != null ||
+      market.secondaryYesPrice != null ||
+      market.secondaryNoPrice != null,
+  );
+}
+
+async function getMarketWithRetry(marketId: string) {
+  let first: PantaMarket | null = null;
+
+  try {
+    first = await getMarket(marketId);
+    if (hasUsefulDetail(first)) return first;
+  } catch {
+    first = null;
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 180));
+
+  try {
+    const second = await getMarket(marketId);
+    return hasUsefulDetail(second) ? second : first ?? second;
+  } catch {
+    if (first) return first;
+    throw new Error("Panta market detail unavailable");
+  }
+}
+
 const getCachedMarkets = unstable_cache(
   async () => {
     const nowSec = Date.now() / 1000;
@@ -106,7 +142,7 @@ const getCachedMarkets = unstable_cache(
     const detailed = await Promise.all(
       detailTargets.map(async (market) => {
         try {
-          return mergeMarket(market, await getMarket(market.marketId));
+          return mergeMarket(market, await getMarketWithRetry(market.marketId));
         } catch {
           return market;
         }
@@ -191,7 +227,7 @@ const getCachedMarkets = unstable_cache(
       },
     };
   },
-  ["signaldesk-panta-markets-v3"],
+  ["signaldesk-panta-markets-v4"],
   {revalidate: 30},
 );
 
