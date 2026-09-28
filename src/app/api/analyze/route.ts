@@ -469,7 +469,7 @@ export async function POST(req: NextRequest) {
     const cacheKey = researchCacheKey(market, mode, context);
     const cachedResearch = unstable_cache(
       () => callResearchModel({apiKey, prompt, imageUrl, sandbox}),
-      ["signaldesk-ai-research-v4", cacheKey],
+      ["signaldesk-ai-research-v5", cacheKey],
       {revalidate: mode === "move" ? 300 : 1800},
     );
 
@@ -480,6 +480,13 @@ export async function POST(req: NextRequest) {
       research.brief.decision.summary =
         research.brief.decision.summary ||
         "SignalDesk does not predict political outcomes; review the sourced facts and uncertainty.";
+    } else if (research.brief.decision.signal === "not_assessed") {
+      research.brief.decision.signal = "unclear";
+      research.brief.decision.strength = "Low";
+      research.brief.decision.summary =
+        !hasTextMetadata && imageUrl
+          ? "The market image does not provide enough readable question text to assess YES or NO safely."
+          : "The current evidence is not clear enough to support a directional view.";
     }
 
     return NextResponse.json({
