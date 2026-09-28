@@ -448,6 +448,10 @@ export async function POST(req: NextRequest) {
       "Return no more than 3 watch items. Each must be one short sentence.",
       "Do not include URLs in any text field. Sources are displayed separately by the product.",
       "The confidence field means confidence in the quality of the evidence, not confidence that YES or NO will win.",
+      "Prioritize authoritative first-party sources when they directly answer the market question, such as the official company, publisher, government agency, league, regulator, or project website.",
+      "For future-event markets, judge the direction of CURRENT public evidence. Do not mark the evidence unclear merely because the event is still in the future.",
+      "If a recent authoritative first-party source directly confirms the exact date, condition, or event in the market question, treat that as strong directional evidence unless credible newer evidence contradicts it.",
+      "A possible future reversal or delay belongs in counterevidence or uncertainty; it does not by itself erase a currently well-supported direction.",
       "Add a decision lens that helps the user reason, without giving trading instructions.",
       "For non-political markets, decision.signal may say leans_yes, balanced, leans_no, or unclear based only on current public evidence.",
       "Decision strength describes how strong the evidence is, not expected return and not certainty of the outcome.",
@@ -465,7 +469,7 @@ export async function POST(req: NextRequest) {
     const cacheKey = researchCacheKey(market, mode, context);
     const cachedResearch = unstable_cache(
       () => callResearchModel({apiKey, prompt, imageUrl, sandbox}),
-      ["signaldesk-ai-research-v3", cacheKey],
+      ["signaldesk-ai-research-v4", cacheKey],
       {revalidate: mode === "move" ? 300 : 1800},
     );
 
