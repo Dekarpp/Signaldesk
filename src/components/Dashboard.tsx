@@ -154,7 +154,7 @@ const marketDisplayCategory = (market: SignalMarket) => {
   if (/\b(weather|wmo|forecast|temperature|rainfall|precipitation|hurricane|storm|snowfall|climate)\b/.test(text)) {
     return "weather";
   }
-  if (/\b(politic|election|electoral|candidate|president|prime minister|parliament|congress|senate|governor|mayor|referendum|ballot)\b/.test(text)) {
+  if (/\b(politic(?:s|al)?|election|electoral|candidate|president|prime minister|parliament|congress|senate|governor|mayor|referendum|ballot)\b/.test(text)) {
     return "politics";
   }
   if (/\b(gaming|game|gta|playstation|xbox|nintendo|steam)\b/.test(text)) {
@@ -214,6 +214,7 @@ export default function Dashboard() {
   const [brief, setBrief] = useState<SimpleBrief | null>(null);
   const [sources, setSources] = useState<Citation[]>([]);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [researchError, setResearchError] = useState("");
   const [activity, setActivity] = useState<MarketActivity | null>(null);
   const [activityLoading, setActivityLoading] = useState(false);
   const [wallet, setWallet] = useState("");
@@ -493,6 +494,7 @@ export default function Dashboard() {
     setAnalysis("");
     setBrief(null);
     setSources([]);
+    setResearchError("");
     setActivity(null);
     setQuote(null);
     setBuildPreview(null);
@@ -543,6 +545,7 @@ export default function Dashboard() {
     setAnalysis("");
     setBrief(null);
     setSources([]);
+    setResearchError("");
     setError("");
 
     try {
@@ -577,7 +580,8 @@ export default function Dashboard() {
         },
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Research failed");
+      const message = err instanceof Error ? err.message : "Research failed";
+      setResearchError(message);
     } finally {
       setAnalysisLoading(false);
     }
@@ -1004,6 +1008,12 @@ export default function Dashboard() {
                   <button className="btn quietBtn" onClick={copyResearch}>Copy</button>
                 )}
               </div>
+
+              {researchError && (
+                <div className="dataNotice researchErrorNotice">
+                  {researchError}
+                </div>
+              )}
 
               {!researchAvailable && (
                 <div className="dataNotice">
