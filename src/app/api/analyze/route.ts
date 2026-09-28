@@ -108,7 +108,7 @@ function fallbackBrief(text: string): SimpleBrief {
   };
 }
 
-function parseBrief(text: string): SimpleBrief {
+function tryParseBrief(text: string): SimpleBrief | null {
   try {
     const parsed = JSON.parse(text);
     return {
@@ -166,8 +166,12 @@ function parseBrief(text: string): SimpleBrief {
       },
     };
   } catch {
-    return fallbackBrief(text);
+    return null;
   }
+}
+
+function parseBrief(text: string): SimpleBrief {
+  return tryParseBrief(text) ?? fallbackBrief(text);
 }
 
 function briefToText(brief: SimpleBrief) {
@@ -230,7 +234,7 @@ async function callResearchModel({
       reasoning: {effort: "low"},
       max_output_tokens: Math.max(
         250,
-        Math.min(Number(process.env.SIGNALDESK_AI_MAX_OUTPUT_TOKENS ?? 700), 700),
+        Math.min(Number(process.env.SIGNALDESK_AI_MAX_OUTPUT_TOKENS ?? 1200), 1200),
       ),
       text: {
         format: {
@@ -307,12 +311,97 @@ async function callResearchModel({
   }
 
   const result = extractResponse(data);
-  const brief = parseBrief(result.text);
+  let brief = tryParseBrief(result.text);
+
+  if (!brief) {
+    const retryResponse = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL ?? "gpt-5.6",
+        input: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text:
+                  prompt +
+                  "\n\nIMPORTANT: Return only the requested compact JSON object. Keep every field concise so the response completes.",
+              },
+            ],
+          },
+        ],
+        tools: sandbox ? [] : [{type: "web_search"}],
+        ...(sandbox
+          ? {}
+          : {
+              tool_choice: "required",
+              include: ["web_search_call.action.sources"],
+            }),
+        reasoning: {effort: "low"},
+        max_output_tokens: 1200,
+        text: {
+          format: {
+            type: "json_schema",
+            name: "signaldesk_simple_brief_retry",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                title: {type: "string"},
+                bottomLine: {type: "string"},
+                keyPoints: {type: "array", items: {type: "string"}},
+                uncertainty: {type: "string"},
+                watch: {type: "array", items: {type: "string"}},
+                confidence: {type: "string", enum: ["Low", "Medium", "High"]},
+                decision: {
+                  type: "object",
+                  properties: {
+                    signal: {
+                      type: "string",
+                      enum: ["leans_yes", "balanced", "leans_no", "unclear", "not_assessed"],
+                    },
+                    strength: {type: "string", enum: ["Low", "Medium", "High"]},
+                    summary: {type: "string"},
+                    supporting: {type: "array", items: {type: "string"}},
+                    counter: {type: "array", items: {type: "string"}},
+                    changesView: {type: "array", items: {type: "string"}},
+                  },
+                  required: ["signal", "strength", "summary", "supporting", "counter", "changesView"],
+                  additionalProperties: false,
+                },
+              },
+              required: ["title", "bottomLine", "keyPoints", "uncertainty", "watch", "confidence", "decision"],
+              additionalProperties: false,
+            },
+          },
+        },
+        store: false,
+      }),
+    });
+
+    if (retryResponse.ok) {
+      const retryData = await retryResponse.json();
+      const retryResult = extractResponse(retryData);
+      brief = tryParseBrief(retryResult.text);
+      for (const source of retryResult.sources) {
+        if (!result.sources.some((item) => item.url === source.url)) {
+          result.sources.push(source);
+        }
+      }
+    }
+  }
+
+  const finalBrief = brief ?? fallbackBrief(result.text);
 
   return {
-    brief,
-    analysis: briefToText(brief),
-    sources: result.sources,
+    brief: finalBrief,
+    analysis: briefToText(finalBrief),
+    sources: result.sources.slice(0, 6),
   };
 }
 
@@ -469,7 +558,7 @@ export async function POST(req: NextRequest) {
     const cacheKey = researchCacheKey(market, mode, context);
     const cachedResearch = unstable_cache(
       () => callResearchModel({apiKey, prompt, imageUrl, sandbox}),
-      ["signaldesk-ai-research-v5", cacheKey],
+      ["signaldesk-ai-research-v6", cacheKey],
       {revalidate: mode === "move" ? 300 : 1800},
     );
 
