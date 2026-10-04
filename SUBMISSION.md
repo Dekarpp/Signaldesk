@@ -1,6 +1,6 @@
 # SignalDesk — Final Submission Package
 
-_Last updated: September 25, 2026_
+_Last updated: October 4, 2026_
 
 ## Product
 
@@ -44,8 +44,8 @@ SignalDesk creates a research-first workflow:
 - Market-vs-Evidence decision lens
 - supporting evidence and counterevidence
 - explicit “what could change this view” conditions
-- market-move explanation when an actual move or Panta trade is observed
-- browser-persistent watchlist
+- market-move explanation when an actual move, a watched-market move, or recent Panta trade flow is observed
+- browser-persistent watchlist with saved YES-price/time baseline
 - Panta public-wallet positions
 - guarded primary-market quote adapter
 - unsigned Panta transaction-build adapter
@@ -110,7 +110,7 @@ The UI only enables quote preparation when a live primary market exposes executa
 - Missing Panta prices are shown as **No live price**, never visualized as 50%.
 - Missing titles/images are handled with explicit fallbacks rather than invented market data.
 - Political markets receive neutral factual analysis only; SignalDesk does not issue YES/NO political outcome predictions.
-- “Explain the move” stays disabled until a price move or trade activity is actually observed.
+- “Explain the move” stays disabled until a meaningful YES-price move, a watched-market move, or Panta trade flow in the last 24 hours is observed.
 - Quote/build remains unavailable when Panta does not expose executable live pricing.
 
 ## Differentiation
@@ -213,7 +213,7 @@ SignalDesk can start as a Pro research subscription for active prediction-market
 
 ## Current validation
 
-The product is live, open source, connected to Panta production data, and instrumented for early beta usage and feedback. No unverified traction or revenue claims should be added.
+The product is live, open source, connected to Panta production data, and instrumented for early beta usage and feedback. SignalDesk has already been exercised against live Panta markets and live AI research in production; no unverified external-user or revenue claims are included.
 
 ---
 
@@ -415,7 +415,7 @@ Before recording:
 
 ## Media
 
-- [ ] Final product graphic/logo for portal
+- [x] Product graphic available in project assets/library
 - [ ] Record 2–3 minute Colosseum presentation video
 - [ ] Record product demo video under 3 minutes
 - [ ] Upload both videos and confirm public/unlisted access works without login
@@ -452,3 +452,53 @@ Before recording:
 - [ ] Keep the production URL stable
 - [ ] Avoid major product changes unless fixing a real bug
 - [ ] Monitor genuine user feedback and production errors
+
+
+---
+
+# Final copy for submission portals — October 4, 2026
+
+## 160-character pitch
+
+SignalDesk turns live Panta markets into evidence-first research: market odds, fresh sources, counterevidence, watched moves, and guarded execution.
+
+## Colosseum concise description
+
+SignalDesk is a prediction-market intelligence layer built on Panta. It combines live Panta market data, trade activity, wallet positions, quote/build flows, and AI-assisted public-source research so users can compare what the market implies with what current evidence supports before acting.
+
+## Problem / insight
+
+Prediction markets compress beliefs into a price, but they do not explain the research behind that price. Users still jump between market pages, news, resolution rules, wallet positions, and activity feeds. SignalDesk turns that fragmented process into one research-first workflow.
+
+## Product / differentiation
+
+SignalDesk separates the market signal from the evidence layer. For each Panta market it shows live YES/NO state, timing and activity, then independently checks fresh public sources and surfaces supporting evidence, counterevidence, uncertainty, and what would change the view. Watch stores the YES price and timestamp when a market is saved, so later moves can be measured from the user's own baseline and investigated with Explain the move.
+
+## Panta integration
+
+Panta powers the core product: market discovery, market details/prices, recent trade activity, public-wallet positions, primary quote generation, and unsigned transaction building. SignalDesk keeps signing and broadcasting outside the app and never asks for private keys.
+
+## Go-to-market
+
+Start with active prediction-market users who research several markets per week. Acquire early users through Panta/Solana communities and direct beta sharing, then retain them with watched-market move tracking, durable history, saved research, alerts, and portfolio intelligence. Expand later into creator/media dashboards, embeddable widgets, and B2B market-intelligence APIs.
+
+## Validation
+
+The production app is live and connected to Panta production data. The end-to-end market and AI research flows have been exercised in production, and anonymous instrumentation is in place for sessions, market opens, watchlist adds, research, move research, wallet-position loads, quote/build usage, and feedback. We do not claim unverified external-user counts or revenue.
+
+## Development history disclosure
+
+SignalDesk was built during the Crypto World's Fair hackathon sprint. It composes with existing third-party infrastructure including Next.js, Vercel, OpenAI, Solana, and the Panta API. No pre-existing funded company or mature product was brought into the hackathon.
+
+## Superteam Panta Sidetrack copy
+
+SignalDesk is an AI + prediction-market decision-support terminal built directly on the Panta API.
+
+Panta powers market discovery, details and prices, recent trade activity, public-wallet positions, and guarded quote / unsigned transaction-build flows. SignalDesk adds a research layer that compares the live market signal with fresh public evidence, counterevidence, uncertainty, and explicit conditions that would change the view.
+
+Watch also stores the YES price and timestamp when a user starts following a market. If the market later moves, SignalDesk can show the change from that personal baseline and use Explain the move to research plausible drivers. The feature stays disabled when there is no meaningful observed move or recent trade flow.
+
+Execution remains non-custodial and human-controlled: SignalDesk never requests private keys and never auto-signs or broadcasts transactions.
+
+Live demo: https://signaldesk-henna.vercel.app
+Source: https://github.com/Dekarpp/Signaldesk
