@@ -69,6 +69,12 @@ type MarketActivity = {
 
 type PricePoint = {at: number; yes: number};
 
+type WatchSnapshot = {
+  marketId: string;
+  watchedAt: number;
+  yesAtWatch: number | null;
+};
+
 type Quote = {
   quoteId: string;
   marketId: string;
@@ -230,6 +236,7 @@ export default function Dashboard() {
   const [priceDeltas, setPriceDeltas] = useState<Record<string, number>>({});
   const [priceHistory, setPriceHistory] = useState<Record<string, PricePoint[]>>({});
   const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [watchSnapshots, setWatchSnapshots] = useState<Record<string, WatchSnapshot>>({});
   const [watchlistOnly, setWatchlistOnly] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
@@ -330,11 +337,38 @@ export default function Dashboard() {
         const saved = JSON.parse(
           window.localStorage.getItem("signaldesk:watchlist") ?? "[]",
         );
-        if (Array.isArray(saved)) {
-          setWatchlist(saved.filter((item): item is string => typeof item === "string"));
+        const savedIds = Array.isArray(saved)
+          ? saved.filter((item): item is string => typeof item === "string")
+          : [];
+        setWatchlist(savedIds);
+
+        const savedSnapshots = JSON.parse(
+          window.localStorage.getItem("signaldesk:watchlist:v2") ?? "[]",
+        );
+        if (Array.isArray(savedSnapshots)) {
+          const nextSnapshots = savedSnapshots.reduce<Record<string, WatchSnapshot>>(
+            (acc, item) => {
+              if (
+                item &&
+                typeof item.marketId === "string" &&
+                Number.isFinite(item.watchedAt) &&
+                (item.yesAtWatch == null || Number.isFinite(item.yesAtWatch))
+              ) {
+                acc[item.marketId] = {
+                  marketId: item.marketId,
+                  watchedAt: item.watchedAt,
+                  yesAtWatch: item.yesAtWatch ?? null,
+                };
+              }
+              return acc;
+            },
+            {},
+          );
+          setWatchSnapshots(nextSnapshots);
         }
       } catch {
         setWatchlist([]);
+        setWatchSnapshots({});
       }
     }
 
@@ -372,6 +406,37 @@ export default function Dashboard() {
     void loadActivity();
     return () => controller.abort();
   }, [selected?.marketId]);
+
+  useEffect(() => {
+    if (!data?.markets.length || !watchlist.length) return;
+
+    setWatchSnapshots((current) => {
+      let changed = false;
+      const next = {...current};
+
+      for (const marketId of watchlist) {
+        if (next[marketId]?.yesAtWatch != null) continue;
+        const market = data.markets.find((item) => item.marketId === marketId);
+        if (!market || market.yes == null) continue;
+
+        next[marketId] = {
+          marketId,
+          watchedAt: next[marketId]?.watchedAt ?? Date.now(),
+          yesAtWatch: market.yes,
+        };
+        changed = true;
+      }
+
+      if (changed && typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "signaldesk:watchlist:v2",
+          JSON.stringify(Object.values(next)),
+        );
+      }
+
+      return changed ? next : current;
+    });
+  }, [data, watchlist]);
 
   const filtered = useMemo(() => {
     const items = [...(data?.markets ?? [])].filter((market) => {
@@ -519,19 +584,45 @@ export default function Dashboard() {
 
   function toggleWatchlist(marketId: string) {
     setWatchlist((current) => {
-      const next = current.includes(marketId)
+      const removing = current.includes(marketId);
+      const next = removing
         ? current.filter((id) => id !== marketId)
         : [...current, marketId];
+
+      const market = data?.markets.find((item) => item.marketId === marketId);
+
+      setWatchSnapshots((currentSnapshots) => {
+        const nextSnapshots = {...currentSnapshots};
+
+        if (removing) {
+          delete nextSnapshots[marketId];
+        } else {
+          nextSnapshots[marketId] = {
+            marketId,
+            watchedAt: Date.now(),
+            yesAtWatch: market?.yes ?? null,
+          };
+        }
+
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(
+            "signaldesk:watchlist:v2",
+            JSON.stringify(Object.values(nextSnapshots)),
+          );
+        }
+
+        return nextSnapshots;
+      });
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem("signaldesk:watchlist", JSON.stringify(next));
       }
 
-      if (!current.includes(marketId)) {
-        const market = data?.markets.find((item) => item.marketId === marketId);
+      if (!removing) {
         void trackTraction("watchlist_add", {
           category: market?.category ?? undefined,
           phase: market?.phase,
+          yesAtWatch: market?.yes ?? undefined,
         });
       }
 
@@ -561,6 +652,9 @@ export default function Dashboard() {
           context: mode === "move"
             ? {
                 priceDeltaYes: priceDeltas[selected.marketId] ?? null,
+                priceDeltaSinceWatch: watchPriceDelta,
+                watchedAt: selectedWatch?.watchedAt ?? null,
+                yesAtWatch: selectedWatch?.yesAtWatch ?? null,
                 activity,
                 observedAt: new Date().toISOString(),
               }
@@ -703,13 +797,24 @@ export default function Dashboard() {
     Boolean(selected) &&
     Math.abs(priceDeltas[selected!.marketId] ?? 0) >= 0.01;
 
+  const selectedWatch = selected ? watchSnapshots[selected.marketId] : undefined;
+  const watchPriceDelta =
+    selected &&
+    selectedWatch?.yesAtWatch != null &&
+    selected.yes != null
+      ? selected.yes - selectedWatch.yesAtWatch
+      : null;
+  const significantWatchMove =
+    watchPriceDelta != null && Math.abs(watchPriceDelta) >= 0.01;
+
   const hasRecentTradeFlow =
     (activity?.tradeCount ?? 0) > 0 &&
     activity?.latestBlockTime != null &&
     activity.latestBlockTime >= Math.floor(Date.now() / 1000) - 24 * 60 * 60;
 
   const moveAvailable =
-    Boolean(selected) && (significantPriceMove || hasRecentTradeFlow);
+    Boolean(selected) &&
+    (significantPriceMove || significantWatchMove || hasRecentTradeFlow);
 
   const sourceSites = Object.values(
     sources.reduce<Record<string, {domain: string; url: string; title: string; pages: number}>>(
@@ -862,6 +967,7 @@ export default function Dashboard() {
               market={market}
               selectedId={selected?.marketId ?? null}
               watchlist={watchlist}
+              watchSnapshot={watchSnapshots[market.marketId]}
               priceDelta={priceDeltas[market.marketId]}
               onSelect={chooseMarket}
             />
@@ -1004,7 +1110,7 @@ export default function Dashboard() {
                       ? "Checking recent Panta activity"
                       : moveAvailable
                         ? "Research plausible drivers of the observed move"
-                        : "Available after a meaningful YES-price move (at least 1 point) or Panta trade flow in the last 24 hours"
+                        : "Available after a meaningful YES-price move (at least 1 point), a move since you started watching, or Panta trade flow in the last 24 hours"
                   }
                 >
                   {activityLoading
@@ -1023,6 +1129,26 @@ export default function Dashboard() {
                   <button className="btn quietBtn" onClick={copyResearch}>Copy</button>
                 )}
               </div>
+
+              {selectedWatch && (
+                <div className="watchSnapshotNote">
+                  <span>★ Watching since {new Date(selectedWatch.watchedAt).toLocaleString()}</span>
+                  <strong>
+                    {selectedWatch.yesAtWatch == null
+                      ? "Baseline starts when a live YES price is available"
+                      : selected.yes == null
+                        ? "Saved at " + pct(selectedWatch.yesAtWatch) + " · current price unavailable"
+                        : "YES " +
+                          pct(selectedWatch.yesAtWatch) +
+                          " → " +
+                          pct(selected.yes) +
+                          " · " +
+                          (watchPriceDelta! >= 0 ? "+" : "") +
+                          (watchPriceDelta! * 100).toFixed(1) +
+                          " pts"}
+                  </strong>
+                </div>
+              )}
 
               {researchError && (
                 <div className="dataNotice researchErrorNotice">
@@ -1346,12 +1472,14 @@ function MarketCard({
   market,
   selectedId,
   watchlist,
+  watchSnapshot,
   priceDelta,
   onSelect,
 }: {
   market: SignalMarket;
   selectedId: string | null;
   watchlist: string[];
+  watchSnapshot?: WatchSnapshot;
   priceDelta?: number;
   onSelect: (market: SignalMarket) => void;
 }) {
@@ -1366,7 +1494,15 @@ function MarketCard({
           <span className="categoryTag">{marketDisplayCategory(market)}</span>
           <span className="phase">{market.phase}</span>
           {watchlist.includes(market.marketId) && (
-            <span className="watchFlag">★ saved</span>
+            <span className="watchFlag">
+              ★ saved
+              {watchSnapshot?.yesAtWatch != null && market.yes != null
+                ? " · " +
+                  ((market.yes - watchSnapshot.yesAtWatch) >= 0 ? "+" : "") +
+                  ((market.yes - watchSnapshot.yesAtWatch) * 100).toFixed(1) +
+                  " pts"
+                : ""}
+            </span>
           )}
         </div>
         <div className="priorityBadge">
