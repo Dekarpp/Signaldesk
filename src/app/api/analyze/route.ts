@@ -440,9 +440,16 @@ function researchCacheKey(
       mode === "move"
         ? {
             priceDeltaYes: context?.priceDeltaYes ?? null,
+            priceDeltaSinceWatch: context?.priceDeltaSinceWatch ?? null,
+            watchedAt: context?.watchedAt ?? null,
+            yesAtWatch: context?.yesAtWatch ?? null,
             tradeCount:
               context?.activity && typeof context.activity === "object"
                 ? (context.activity as Record<string, unknown>).tradeCount ?? null
+                : null,
+            latestBlockTime:
+              context?.activity && typeof context.activity === "object"
+                ? (context.activity as Record<string, unknown>).latestBlockTime ?? null
                 : null,
           }
         : null,
