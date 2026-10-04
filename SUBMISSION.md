@@ -502,3 +502,12 @@ Execution remains non-custodial and human-controlled: SignalDesk never requests 
 
 Live demo: https://signaldesk-henna.vercel.app
 Source: https://github.com/Dekarpp/Signaldesk
+
+
+## Founder / team background
+
+SignalDesk is a solo-founder project. The founder brings hands-on crypto-market experience and an operations background, and used AI-assisted engineering to move from concept to a production MVP during the hackathon sprint. The product direction came from a practical user problem: prediction-market prices are useful, but the research needed to interpret them is scattered across too many sources and tools.
+
+## Founder commitment
+
+The immediate goal is to use the hackathon to validate whether active prediction-market users repeatedly return for market monitoring, watched-move explanations, and evidence checks. If that usage proves durable, SignalDesk will continue as a focused research product rather than a one-off hackathon demo.
