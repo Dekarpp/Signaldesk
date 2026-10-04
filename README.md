@@ -46,14 +46,14 @@ The product displays the required **Powered by Panta** attribution alongside Pan
 - Deterministic research-priority score
 - Search, category, status, volume/deadline/usefulness sorting
 - Market images and metadata fallbacks
-- Browser-persistent watchlist
+- Browser-persistent watchlist with saved YES-price/time baseline
 - Previous-scan probability deltas
 - Panta trade-tape summary: YES flow, NO flow, primary vs. secondary activity
 - AI research briefs with fresh web context and sources
 - **Market vs Evidence decision lens** — separates Panta's market-implied probability from the direction and strength of current public evidence
 - Decision support with supporting facts, counterevidence, and explicit conditions that would change the evidence view
 - Political-market safeguard: neutral factual analysis only; SignalDesk does not predict political outcomes
-- **Why did this market move?** research mode that treats observed price/activity changes as context rather than proof of causation
+- **Explain the move** research mode that activates only after a meaningful observed YES-price move, a watched-market move, or Panta trade flow in the last 24 hours
 - Public-wallet Panta positions view
 - Active-position mark-to-market estimates when a current Panta price is available
 - Guarded primary-market quote preview
