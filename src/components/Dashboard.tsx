@@ -1632,7 +1632,7 @@ function MarketSnapshot({
           <div className="visualHead">
             <div>
               <span>Why it is interesting</span>
-              <strong>Research priority</strong>
+              <strong>Research priority score</strong>
             </div>
             <small>{market.signalScore.toFixed(0)}/100</small>
           </div>
@@ -1706,9 +1706,21 @@ function MarketSnapshot({
 
 function ScoreBars({market}: {market: SignalMarket}) {
   const rows = [
-    {label: "Activity", value: market.liquidityScore},
-    {label: "Uncertainty", value: market.disagreementScore},
-    {label: "Timing", value: market.timingScore},
+    {
+      label: "Market activity",
+      value: market.liquidityScore,
+      hint: "Based on reported trading volume",
+    },
+    {
+      label: "Price uncertainty",
+      value: market.disagreementScore,
+      hint: "Higher when YES is closer to 50%",
+    },
+    {
+      label: "Time sensitivity",
+      value: market.timingScore,
+      hint: "Higher as the market approaches resolution",
+    },
   ];
 
   return (
@@ -1716,14 +1728,20 @@ function ScoreBars({market}: {market: SignalMarket}) {
       {rows.map((row) => (
         <div className="scoreBarRow" key={row.label}>
           <div className="scoreBarLabel">
-            <span>{row.label}</span>
-            <strong>{Math.round(row.value)}</strong>
+            <div>
+              <span>{row.label}</span>
+              <small>{row.hint}</small>
+            </div>
+            <strong>{Math.round(row.value)}/100</strong>
           </div>
           <div className="scoreBarTrack">
             <div style={{width: Math.max(0, Math.min(100, row.value)) + "%"}} />
           </div>
         </div>
       ))}
+      <p className="scoreNote">
+        Attention heuristic — not a probability or forecast.
+      </p>
     </div>
   );
 }
