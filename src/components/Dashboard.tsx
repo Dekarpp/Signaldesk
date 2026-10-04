@@ -504,6 +504,7 @@ export default function Dashboard() {
   const recentlyClosedFiltered = filtered
     .filter(
       (market) =>
+        marketTextReady(market) &&
         !(
           (market.phase === "primary" || market.phase === "secondary") &&
           (market.daysToClose ?? -1) >= 0
@@ -540,14 +541,34 @@ export default function Dashboard() {
       ? Math.max(...data.markets.map((market) => market.signalScore))
       : null;
 
-  const selectedFilteredIndex = selected
-    ? filtered.findIndex((market) => market.marketId === selected.marketId)
+  const selectedIsCurrent =
+    Boolean(selected) &&
+    currentFiltered.some((market) => market.marketId === selected!.marketId);
+  const selectedIsRecentlyClosed =
+    Boolean(selected) &&
+    recentlyClosedFiltered.some((market) => market.marketId === selected!.marketId);
+
+  const navigationMarkets = selectedIsCurrent
+    ? currentFiltered
+    : selectedIsRecentlyClosed
+      ? recentlyClosedFiltered
+      : filtered;
+  const navigationLabel = selectedIsCurrent
+    ? "Current"
+    : selectedIsRecentlyClosed
+      ? "Recently closed"
+      : "Catalog";
+  const selectedNavigationIndex = selected
+    ? navigationMarkets.findIndex((market) => market.marketId === selected.marketId)
     : -1;
   const previousMarket =
-    selectedFilteredIndex > 0 ? filtered[selectedFilteredIndex - 1] : null;
+    selectedNavigationIndex > 0
+      ? navigationMarkets[selectedNavigationIndex - 1]
+      : null;
   const nextMarket =
-    selectedFilteredIndex >= 0 && selectedFilteredIndex < filtered.length - 1
-      ? filtered[selectedFilteredIndex + 1]
+    selectedNavigationIndex >= 0 &&
+    selectedNavigationIndex < navigationMarkets.length - 1
+      ? navigationMarkets[selectedNavigationIndex + 1]
       : null;
 
   function chooseMarket(market: SignalMarket, scrollToResearch = true) {
@@ -1051,11 +1072,13 @@ export default function Dashboard() {
                 })
               }
             >
-              <span>Markets</span>
+              <span>{navigationLabel}</span>
               <small>
-                {selectedFilteredIndex >= 0
-                  ? String(selectedFilteredIndex + 1) + " / " + String(filtered.length)
-                  : String(filtered.length) + " markets"}
+                {selectedNavigationIndex >= 0
+                  ? String(selectedNavigationIndex + 1) +
+                    " / " +
+                    String(navigationMarkets.length)
+                  : String(navigationMarkets.length) + " markets"}
               </small>
             </button>
 
@@ -1551,6 +1574,14 @@ function CompactMarketRow({
   market: SignalMarket;
   onSelect: (market: SignalMarket) => void;
 }) {
+  const compactLabel =
+    market.title?.trim() ||
+    market.question?.trim() ||
+    market.description?.trim() ||
+    (market.images?.[0]
+      ? "Question text unavailable · image only"
+      : "Question text unavailable");
+
   return (
     <button className="compactMarketRow" onClick={() => onSelect(market)}>
       <MarketVisual market={market} variant="thumb" />
@@ -1559,7 +1590,7 @@ function CompactMarketRow({
           <span>{marketDisplayCategory(market)}</span>
           <span>{market.phase}</span>
         </div>
-        <strong>{marketLabel(market)}</strong>
+        <strong>{compactLabel}</strong>
       </div>
       <div className="compactMarketStats">
         <span>YES <b>{pct(market.yes)}</b></span>
