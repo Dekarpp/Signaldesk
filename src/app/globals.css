@@ -3522,3 +3522,40 @@ h1 {
     filter: blur(16px) brightness(.34) saturate(.9);
   }
 }
+
+
+/* Watchlist baseline tracking */
+.watchSnapshotNote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #33452b;
+  border-radius: 12px;
+  background: rgba(185,255,102,.045);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.watchSnapshotNote span {
+  min-width: 0;
+}
+
+.watchSnapshotNote strong {
+  color: var(--accent);
+  text-align: right;
+  font-size: 11px;
+}
+
+@media (max-width: 620px) {
+  .watchSnapshotNote {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .watchSnapshotNote strong {
+    text-align: left;
+  }
+}
