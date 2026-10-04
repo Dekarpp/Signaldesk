@@ -699,12 +699,17 @@ export default function Dashboard() {
 
   const researchAvailable = selected ? marketResearchReady(selected) : false;
 
-  const moveAvailable =
+  const significantPriceMove =
     Boolean(selected) &&
-    (
-      Math.abs(priceDeltas[selected!.marketId] ?? 0) >= 0.0001 ||
-      (activity?.tradeCount ?? 0) > 0
-    );
+    Math.abs(priceDeltas[selected!.marketId] ?? 0) >= 0.01;
+
+  const hasRecentTradeFlow =
+    (activity?.tradeCount ?? 0) > 0 &&
+    activity?.latestBlockTime != null &&
+    activity.latestBlockTime >= Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+
+  const moveAvailable =
+    Boolean(selected) && (significantPriceMove || hasRecentTradeFlow);
 
   const sourceSites = Object.values(
     sources.reduce<Record<string, {domain: string; url: string; title: string; pages: number}>>(
@@ -993,10 +998,20 @@ export default function Dashboard() {
                 <button
                   className="btn"
                   onClick={() => runResearch("move")}
-                  disabled={analysisLoading || !moveAvailable}
-                  title={moveAvailable ? "Research plausible drivers of the observed move" : "Available after SignalDesk observes a price move or recent Panta trades"}
+                  disabled={analysisLoading || activityLoading || !moveAvailable}
+                  title={
+                    activityLoading
+                      ? "Checking recent Panta activity"
+                      : moveAvailable
+                        ? "Research plausible drivers of the observed move"
+                        : "Available after a meaningful YES-price move (at least 1 point) or Panta trade flow in the last 24 hours"
+                  }
                 >
-                  Explain the move
+                  {activityLoading
+                    ? "Checking move…"
+                    : moveAvailable
+                      ? "Explain the move"
+                      : "No significant move yet"}
                 </button>
                 <button
                   className={"btn " + (watchlist.includes(selected.marketId) ? "watching" : "")}
