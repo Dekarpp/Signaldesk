@@ -10,8 +10,13 @@ export async function GET(req: NextRequest) {
   try {
     const tape = await getMarketTrades(marketId, 80);
     const items = tape.items ?? [];
+    const nowSec = Math.floor(Date.now() / 1000);
+    const recentCutoff = nowSec - 24 * 60 * 60;
+    const recentItems = items.filter(
+      (trade) => trade.blockTime != null && trade.blockTime >= recentCutoff,
+    );
 
-    const summary = items.reduce(
+    const summary = recentItems.reduce(
       (acc, trade) => {
         acc.yesFlow += Number(trade.yesAmount ?? 0) || 0;
         acc.noFlow += Number(trade.noAmount ?? 0) || 0;
@@ -30,10 +35,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       marketId,
-      tradeCount: items.length,
+      tradeCount: recentItems.length,
+      totalTradeCount: items.length,
+      recentWindowHours: 24,
       ...summary,
       latestBlockTime,
-      recent: items.slice(0, 8).map((trade) => ({
+      recent: recentItems.slice(0, 8).map((trade) => ({
         id: trade.id,
         yesAmount: trade.yesAmount,
         noAmount: trade.noAmount,
