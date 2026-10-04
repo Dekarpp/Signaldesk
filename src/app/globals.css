@@ -1898,14 +1898,39 @@ h1 {
 .scoreBarLabel {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 12px;
   color: var(--muted);
   font-size: 10px;
 }
 
+.scoreBarLabel > div {
+  display: grid;
+  gap: 2px;
+}
+
+.scoreBarLabel span {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.scoreBarLabel small {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.25;
+}
+
 .scoreBarLabel strong {
+  flex: 0 0 auto;
   color: var(--text);
   font-size: 11px;
+}
+
+.scoreNote {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
 }
 
 .scoreBarTrack {
